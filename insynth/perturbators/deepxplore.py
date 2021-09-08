@@ -13,7 +13,7 @@ from insynth.perturbation import WhiteboxImagePerturbator
 class DeepXploreImagePerturbator(WhiteboxImagePerturbator):
     def __init__(self, model1, model2, model3, coverage_metric, snac_data):
         super().__init__(model1)
-        self.model1=model1
+        self.model1 = model1
         self.model2 = model2
         self.model3 = model3
         self.model_layer_dict1, self.model_layer_dict2, self.model_layer_dict3 = DeepXploreImagePerturbator.init_coverage_tables(
@@ -37,40 +37,43 @@ class DeepXploreImagePerturbator(WhiteboxImagePerturbator):
                                             (model3, self.model_layer_dict3)]:
                 for img in snac_data:
                     gen_img = np.expand_dims(img, axis=0)
-                    DeepXploreImagePerturbator.update_neuron_bounds(gen_img, model1, model_layer_dict)
+                    DeepXploreImagePerturbator.update_neuron_bounds(gen_img, model, model_layer_dict)
 
     def apply(self, original_input: ImageInput):
-        gen_img = np.expand_dims(original_input.image, axis=0)
-        label1, label2, label3 = np.argmax(self.model1.predict(gen_img)[0]), np.argmax(self.model2.predict(gen_img)[0]), np.argmax(
+        gen_img = np.expand_dims(original_input, axis=0)
+        label1, label2, label3 = np.argmax(self.model1.predict(gen_img)[0]), np.argmax(
+            self.model2.predict(gen_img)[0]), np.argmax(
             self.model3.predict(gen_img)[0])
 
         DeepXploreImagePerturbator.update_coverage(gen_img, self.model1, self.m1_dict, self.model_layer_dict1, True, 0)
         DeepXploreImagePerturbator.update_coverage(gen_img, self.model2, self.m2_dict, self.model_layer_dict2, True, 0)
         DeepXploreImagePerturbator.update_coverage(gen_img, self.model3, self.m3_dict, self.model_layer_dict3, True, 0)
 
-        if not label1==label2==label3:
-            return gen_img
+        #if not label1 == label2 == label3:
+        #    return gen_img
         orig_label = label1
-
-
 
         # we run gradient ascent for 20 steps
         for iters in range(20):
             input_variable = tf.Variable(gen_img)
 
-            before_softmax_int_model1 = keras.models.Model(inputs=self.model1.inputs, outputs=self.model1.get_layer('before_softmax').output)
-            before_softmax_int_model2 = keras.models.Model(inputs=self.model2.inputs, outputs=self.model2.get_layer('before_softmax').output)
-            before_softmax_int_model3 = keras.models.Model(inputs=self.model3.inputs, outputs=self.model3.get_layer('before_softmax').output)
-
-
+            before_softmax_int_model1 = keras.models.Model(inputs=self.model1.inputs,
+                                                           outputs=self.model1.get_layer('before_softmax').output)
+            before_softmax_int_model2 = keras.models.Model(inputs=self.model2.inputs,
+                                                           outputs=self.model2.get_layer('before_softmax').output)
+            before_softmax_int_model3 = keras.models.Model(inputs=self.model3.inputs,
+                                                           outputs=self.model3.get_layer('before_softmax').output)
 
             layer_name1, index1 = DeepXploreImagePerturbator.neuron_to_cover(self.m1_dict['nc'])
             layer_name2, index2 = DeepXploreImagePerturbator.neuron_to_cover(self.m2_dict['nc'])
             layer_name3, index3 = DeepXploreImagePerturbator.neuron_to_cover(self.m3_dict['nc'])
 
-            int_model1 = keras.models.Model(inputs=self.model1.inputs, outputs=self.model1.get_layer(layer_name1).output)
-            int_model2 = keras.models.Model(inputs=self.model2.inputs, outputs=self.model2.get_layer(layer_name2).output)
-            int_model3 = keras.models.Model(inputs=self.model3.inputs, outputs=self.model3.get_layer(layer_name3).output)
+            int_model1 = keras.models.Model(inputs=self.model1.inputs,
+                                            outputs=self.model1.get_layer(layer_name1).output)
+            int_model2 = keras.models.Model(inputs=self.model2.inputs,
+                                            outputs=self.model2.get_layer(layer_name2).output)
+            int_model3 = keras.models.Model(inputs=self.model3.inputs,
+                                            outputs=self.model3.get_layer(layer_name3).output)
 
             with tf.GradientTape() as tape:
                 tape.watch(input_variable)
@@ -79,16 +82,17 @@ class DeepXploreImagePerturbator(WhiteboxImagePerturbator):
                 loss2 = tf.math.reduce_mean(before_softmax_int_model2(input_variable)[..., orig_label])
                 loss3 = tf.math.reduce_mean(before_softmax_int_model3(input_variable)[..., orig_label])
 
-
-                loss1_neuron = int_model1(input_variable)[0][np.unravel_index(index1,list(self.model1.get_layer(layer_name1).output.shape)[1:])]
-                loss2_neuron = int_model2(input_variable)[0][np.unravel_index(index2,list(self.model2.get_layer(layer_name2).output.shape)[1:])]
-                loss3_neuron = int_model3(input_variable)[0][np.unravel_index(index3,list(self.model3.get_layer(layer_name3).output.shape)[1:])]
+                loss1_neuron = int_model1(input_variable)[0][
+                    np.unravel_index(index1, list(self.model1.get_layer(layer_name1).output.shape)[1:])]
+                loss2_neuron = int_model2(input_variable)[0][
+                    np.unravel_index(index2, list(self.model2.get_layer(layer_name2).output.shape)[1:])]
+                loss3_neuron = int_model3(input_variable)[0][
+                    np.unravel_index(index3, list(self.model3.get_layer(layer_name3).output.shape)[1:])]
 
                 layer_output = (loss1 + loss2 + loss3) + 0.1 * (loss1_neuron + loss2_neuron + loss3_neuron)
 
                 # for adversarial image generation
-                final_loss = tf.math.reduce_mean(loss1_neuron)
-
+                final_loss = tf.math.reduce_mean(layer_output)
 
                 # we compute the gradient of the input picture wrt this loss
             grads = DeepXploreImagePerturbator.normalize(tape.gradient(final_loss, input_variable))
@@ -98,15 +102,17 @@ class DeepXploreImagePerturbator(WhiteboxImagePerturbator):
             gen_img += grads_value * 0.01
             predictions1 = np.argmax(self.model1.predict(gen_img)[0])
             predictions2 = np.argmax(self.model2.predict(gen_img)[0])
-            predictions3= np.argmax(self.model3.predict(gen_img)[0])
+            predictions3 = np.argmax(self.model3.predict(gen_img)[0])
 
-
-
-            if not predictions1 == predictions2 == predictions3:
-                DeepXploreImagePerturbator.update_coverage(gen_img, self.model1, self.m1_dict, self.model_layer_dict1, 0)
-                DeepXploreImagePerturbator.update_coverage(gen_img, self.model2, self.m2_dict, self.model_layer_dict2, 0)
-                DeepXploreImagePerturbator.update_coverage(gen_img, self.model3, self.m3_dict, self.model_layer_dict3, 0)
-                return gen_img
+            #if not predictions1 == predictions2 == predictions3:
+        DeepXploreImagePerturbator.update_coverage(gen_img, self.model1, self.m1_dict, self.model_layer_dict1,
+                                                   threshold=0)
+        DeepXploreImagePerturbator.update_coverage(gen_img, self.model2, self.m2_dict, self.model_layer_dict2,
+                                                   threshold=0)
+        DeepXploreImagePerturbator.update_coverage(gen_img, self.model3, self.m3_dict, self.model_layer_dict3,
+                                                   threshold=0)
+                #return gen_img
+        return gen_img
 
     @staticmethod
     def deprocess_image(x):
@@ -230,7 +236,7 @@ class DeepXploreImagePerturbator(WhiteboxImagePerturbator):
 
     @staticmethod
     def fired(model, layer_name, index, input_data, threshold=0):
-        intermediate_layer_model = Model(inputs=model.input, outputs=model.get_layer(layer_name).output)
+        intermediate_layer_model = keras.models.Model(inputs=model.input, outputs=model.get_layer(layer_name).output)
         intermediate_layer_output = intermediate_layer_model.predict(input_data)[0]
         scaled = DeepXploreImagePerturbator.scale(intermediate_layer_output)
         if np.mean(scaled[..., index]) > threshold:
