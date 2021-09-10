@@ -51,7 +51,7 @@ class NeuronCoverageCalculator(AbstractCoverageCalculator):
     def get_random_uncovered_neuron(self):
         return get_random_uncovered_neuron(self.coverage_dict)
 
-    def __init__(self, model, activation_threshold):
+    def __init__(self, model, activation_threshold=0):
         super().__init__(model)
         self._layers_with_neurons = get_layers_with_neurons(self.model)
         self.activation_threshold = activation_threshold

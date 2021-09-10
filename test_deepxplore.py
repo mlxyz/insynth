@@ -3,6 +3,8 @@ from tensorflow.keras.datasets import mnist
 import tensorflow as tf
 
 from insynth.perturbators.deepxplore import DeepXploreImagePerturbator
+from insynth.metrics.coverage.neuron import StrongNeuronActivationCoverageCalculator
+import numpy as np
 
 random.seed(4172306)
 
@@ -74,11 +76,14 @@ model2.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accu
 
 model2.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, validation_split=0.1)
 
-model2.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
+model3.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
-model2.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, validation_split=0.1)
+model3.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, validation_split=0.1)
 
 deepxplore = DeepXploreImagePerturbator(model1, model2, model3, 'SNAC', x_train[:1000])
-
+coverage_calculator = StrongNeuronActivationCoverageCalculator(model1)
+coverage_calculator.update_neuron_bounds(x_train[:1000])
 for image in x_test[:10]:
-    gen_img = deepxplore.apply(image)
+    input_image = np.expand_dims(image, axis=0)
+    coverage_calculator.update_coverage(input_image)
+    gen_img = deepxplore.apply(input_image)
