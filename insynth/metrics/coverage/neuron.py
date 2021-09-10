@@ -1,3 +1,4 @@
+import random
 from collections import defaultdict
 
 import numpy as np
@@ -38,7 +39,18 @@ def neurons_covered(coverage_dict):
     return covered_neurons, total_neurons, covered_neurons / float(total_neurons)
 
 
+def get_random_uncovered_neuron(coverage_dict):
+    uncovered_neurons = [key for key, covered in coverage_dict.items() if not covered]
+    if uncovered_neurons:
+        return random.choice(uncovered_neurons)
+    else:
+        return random.choice(coverage_dict.keys())
+
+
 class NeuronCoverageCalculator(AbstractCoverageCalculator):
+    def get_random_uncovered_neuron(self):
+        return get_random_uncovered_neuron(self.coverage_dict)
+
     def __init__(self, model, activation_threshold):
         super().__init__(model)
         self._layers_with_neurons = get_layers_with_neurons(self.model)
@@ -74,6 +86,9 @@ class StrongNeuronActivationCoverageCalculator(AbstractCoverageCalculator):
         self._layers_with_neurons = get_layers_with_neurons(self.model)
         self.coverage_dict = _init_dict(model)
         self.neuron_bounds_dict = _init_dict(model)
+
+    def get_random_uncovered_neuron(self):
+        return get_random_uncovered_neuron(self.coverage_dict)
 
     def update_neuron_bounds(self, input_data):
         layers = self._layers_with_neurons

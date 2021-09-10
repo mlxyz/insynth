@@ -8,3 +8,7 @@ class AbstractCoverageCalculator(ABC):
     @abstractmethod
     def update_coverage(self, input_data) -> dict:
         pass
+
+    @abstractmethod
+    def get_random_uncovered_neuron(self):
+        pass
