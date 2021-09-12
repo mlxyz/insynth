@@ -2,7 +2,7 @@ import random
 
 from insynth.input import ImageInput
 from insynth.perturbation import BlackboxImagePerturbator, GenericDeepXplorePerturbator, WhiteboxImagePerturbator
-from PIL import Image, ImageEnhance
+from PIL import Image, ImageEnhance, ImageDraw
 import numpy as np
 
 
@@ -43,6 +43,30 @@ class ImageSharpnessPerturbator(BlackboxImagePerturbator):
     def apply(self, original_input: ImageInput):
         with original_input.image as image:
             return ImageEnhance.Sharpness(image).enhance(1.5)
+
+
+class ImageOcclusionPerturbator(BlackboxImagePerturbator):
+    def __init__(self, probability=0.1, max_width=10, max_height=10, color='#000000'):
+        self.probability = probability
+        self.max_width = max_width
+        self.max_height = max_height
+        self.color = color
+
+    def apply(self, original_input: ImageInput):
+        average_occlusion_size = (self.max_width / 2) * (self.max_height / 2)
+        with original_input.image.copy() as image:
+            image_width, image_height = image.size
+            number_occlusions = int(image_width * image_height * self.probability / average_occlusion_size)
+            draw = ImageDraw.Draw(image)
+            for _ in range(number_occlusions):
+                occlusion_width = random.randint(1, self.max_width)
+                occlusion_height = random.randint(1, self.max_height)
+                start_x = random.randint(0, image_width - occlusion_width)
+                start_y = random.randint(0, image_height - occlusion_height)
+                end_x = start_x + occlusion_width
+                end_y = start_y + occlusion_height
+                draw.rectangle([(start_x, start_y), (end_x, end_y)], fill=self.color)
+            return image
 
 
 class DeepXploreImagePerturbator(GenericDeepXplorePerturbator, WhiteboxImagePerturbator):
