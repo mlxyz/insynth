@@ -1,7 +1,6 @@
 import random
 import re
 
-from insynth.input import TextInput
 from insynth.perturbation import BlackboxTextPerturbator
 
 STOP_WORDS = ['i', 'me', 'and']
@@ -21,8 +20,8 @@ class TextTypoPerturbator(BlackboxTextPerturbator):
                 else:
                     self.misspell_map[correct_word].append(line.lower())
 
-    def apply(self, original_input: TextInput):
-        new_text = original_input.text
+    def apply(self, original_input: str):
+        new_text = original_input
         for correct_word, misspellings in self.misspell_map.items():
             new_text = re.sub('(?<!\w)' + re.escape(correct_word) + '(?=\W|$)',
                               lambda match: random.choice(
@@ -35,29 +34,29 @@ class TextCasePerturbator(BlackboxTextPerturbator):
     def __init__(self, probability=0.2):
         self.probability = probability
 
-    def apply(self, original_input: TextInput, probability=0.2):
+    def apply(self, original_input: str, probability=0.2):
         return ''.join((x.lower() if x.isupper() else x.upper()) if random.random() < probability else x for x in
-                       original_input.text)
+                       original_input)
 
 
 class TextWordRemovalPerturbator(BlackboxTextPerturbator):
     def __init__(self, probability=0.2):
         self.probability = probability
 
-    def apply(self, original_input: TextInput):
+    def apply(self, original_input: str):
         return re.sub('(?<!\w)\w+(?=\W|$)',
                       lambda match: '' if random.random() < self.probability else match.group(0),
-                      original_input.text, flags=re.IGNORECASE)
+                      original_input, flags=re.IGNORECASE)
 
 
 class TextStopWordRemovalPerturbator(BlackboxTextPerturbator):
     def __init__(self, probability=0.2):
         self.probability = probability
 
-    def apply(self, original_input: TextInput):
-        new_text = original_input.text
+    def apply(self, original_input: str):
+        new_text = original_input
         for stop_word in STOP_WORDS:
             new_text = re.sub('(?<!\w)' + re.escape(stop_word) + '(?=\W|$)',
                               lambda match: '' if random.random() < self.probability else match.group(0),
-                              original_input.text, flags=re.IGNORECASE)
+                              original_input, flags=re.IGNORECASE)
         return new_text
