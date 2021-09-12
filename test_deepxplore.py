@@ -2,9 +2,10 @@ import random
 from tensorflow.keras.datasets import mnist
 import tensorflow as tf
 
-from insynth.perturbators.deepxplore import DeepXploreImagePerturbator
 from insynth.metrics.coverage.neuron import StrongNeuronActivationCoverageCalculator
 import numpy as np
+
+from insynth.perturbators.image import DeepXploreImagePerturbator
 
 random.seed(4172306)
 

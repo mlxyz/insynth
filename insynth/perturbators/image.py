@@ -1,5 +1,7 @@
+import random
+
 from insynth.input import ImageInput
-from insynth.perturbation import BlackboxImagePerturbator
+from insynth.perturbation import BlackboxImagePerturbator, GenericDeepXplorePerturbator, WhiteboxImagePerturbator
 from PIL import Image, ImageEnhance
 import numpy as np
 
@@ -41,3 +43,36 @@ class ImageSharpnessPerturbator(BlackboxImagePerturbator):
     def apply(self, original_input: ImageInput):
         with original_input.image as image:
             return ImageEnhance.Sharpness(image).enhance(1.5)
+
+
+class DeepXploreImagePerturbator(GenericDeepXplorePerturbator, WhiteboxImagePerturbator):
+
+    def apply_gradient_constraint(self, grads):
+        return DeepXploreImagePerturbator.constraint_light(grads)
+
+    @staticmethod
+    def constraint_occl(gradients, start_point, rect_shape):
+        new_grads = np.zeros_like(gradients)
+        new_grads[:, start_point[0]:start_point[0] + rect_shape[0],
+        start_point[1]:start_point[1] + rect_shape[1]] = gradients[:, start_point[0]:start_point[0] + rect_shape[0],
+                                                         start_point[1]:start_point[1] + rect_shape[1]]
+        return new_grads
+
+    @staticmethod
+    def constraint_light(gradients):
+        new_grads = np.ones_like(gradients)
+        grad_mean = np.mean(gradients)
+        return grad_mean * new_grads
+
+    @staticmethod
+    def constraint_black(gradients, rect_shape=(6, 6)):
+        start_point = (
+            random.randint(0, gradients.shape[1] - rect_shape[0]),
+            random.randint(0, gradients.shape[2] - rect_shape[1]))
+        new_grads = np.zeros_like(gradients)
+        patch = gradients[:, start_point[0]:start_point[0] + rect_shape[0],
+                start_point[1]:start_point[1] + rect_shape[1]]
+        if np.mean(patch) < 0:
+            new_grads[:, start_point[0]:start_point[0] + rect_shape[0],
+            start_point[1]:start_point[1] + rect_shape[1]] = -np.ones_like(patch)
+        return new_grads

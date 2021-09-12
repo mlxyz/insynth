@@ -1,16 +1,19 @@
 import math
 
 import numpy as np
-from scipy.io.wavfile import write
 
-from insynth.input import AudioInput
-from insynth.perturbation import BlackboxAudioPerturbator
+from insynth.perturbation import BlackboxAudioPerturbator, GenericDeepXplorePerturbator, WhiteboxAudioPerturbator
 
 
 class AudioBackgroundWhiteNoisePerturbator(BlackboxAudioPerturbator):
-    def apply(self, original_input: AudioInput, noise_level=0.1):
-        RMS = math.sqrt(np.mean(original_input.signal ** 2))
-        noise = np.random.normal(0, RMS * noise_level, original_input.signal.shape[0])
-        signal_noise = original_input.signal + noise
+    def apply(self, original_input, noise_level=0.1):
+        signal = original_input
+        RMS = math.sqrt(np.mean(signal ** 2))
+        noise = np.random.normal(0, RMS * noise_level, signal.shape[0])
+        signal_noise = signal + noise
+        return signal_noise
 
-        write('test.wav', original_input.sr, signal_noise)
+
+class DeepXploreAudioPerturbator(GenericDeepXplorePerturbator, WhiteboxAudioPerturbator):
+    def apply_gradient_constraint(self, grads):
+        return grads
