@@ -83,6 +83,18 @@ class ImageArtefactPerturbator(BlackboxImagePerturbator):
         return Image.open(buffer, formats=['JPEG'])
 
 
+class ImagePixelizePerturbator(BlackboxImagePerturbator):
+    def __init__(self, factor=0.2):
+        self.factor = factor
+
+    def apply(self, original_input):
+        with original_input.image as image:
+            image_width, image_height = image.size
+            image_small = image.resize((int(image_width * (1 - self.factor)), int(image_height * (1 - self.factor))),
+                                       resample=Image.BILINEAR)
+            return image_small.resize(image.size, Image.NEAREST)
+
+
 class DeepXploreImagePerturbator(GenericDeepXplorePerturbator, WhiteboxImagePerturbator):
 
     def apply_gradient_constraint(self, grads):
