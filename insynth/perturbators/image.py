@@ -3,7 +3,7 @@ import random
 
 from insynth.input import ImageInput
 from insynth.perturbation import BlackboxImagePerturbator, GenericDeepXplorePerturbator, WhiteboxImagePerturbator
-from PIL import Image, ImageEnhance, ImageDraw
+from PIL import Image, ImageEnhance, ImageDraw, ImageOps
 import numpy as np
 
 
@@ -44,6 +44,19 @@ class ImageSharpnessPerturbator(BlackboxImagePerturbator):
     def apply(self, original_input: ImageInput):
         with original_input.image as image:
             return ImageEnhance.Sharpness(image).enhance(1.5)
+
+
+class ImageFlipPerturbator(BlackboxImagePerturbator):
+    def __init__(self, probability=0.2):
+        self.probability = probability
+
+    def apply(self, original_input: ImageInput):
+        with original_input.image.copy() as image:
+            if random.random() < self.probability:
+                image = ImageOps.flip(image)
+            if random.random() < self.probability:
+                image = ImageOps.mirror(image)
+            return image
 
 
 class ImageOcclusionPerturbator(BlackboxImagePerturbator):
