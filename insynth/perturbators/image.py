@@ -1,3 +1,4 @@
+import io
 import random
 
 from insynth.input import ImageInput
@@ -67,6 +68,19 @@ class ImageOcclusionPerturbator(BlackboxImagePerturbator):
                 end_y = start_y + occlusion_height
                 draw.rectangle([(start_x, start_y), (end_x, end_y)], fill=self.color)
             return image
+
+
+class ImageArtefactPerturbator(BlackboxImagePerturbator):
+    def __init__(self, probability=0.2):
+        self.probability = probability
+
+    def apply(self, original_input):
+        buffer = io.BytesIO()
+        with original_input.image as image:
+            image.save(buffer, 'JPEG', quality=int(100 - self.probability * 100))
+        buffer.flush()
+        buffer.seek(0)
+        return Image.open(buffer, formats=['JPEG'])
 
 
 class DeepXploreImagePerturbator(GenericDeepXplorePerturbator, WhiteboxImagePerturbator):
