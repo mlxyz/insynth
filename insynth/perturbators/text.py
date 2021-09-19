@@ -60,3 +60,32 @@ class TextStopWordRemovalPerturbator(BlackboxTextPerturbator):
                               lambda match: '' if random.random() < self.probability else match.group(0),
                               original_input, flags=re.IGNORECASE)
         return new_text
+
+
+class TextWordSwitchPerturbator(BlackboxTextPerturbator):
+    def __init__(self, probability=0.2):
+        self.probability = probability
+        self.was_switched = False
+
+    def apply(self, original_input):
+        tokens = re.findall('(?<!\w)\w+(?=\W|$)', original_input, flags=re.IGNORECASE)
+
+        return re.sub('(?<!\w)\w+(?=\W|$)',
+                      lambda match: self.switch_word(match, tokens),
+                      original_input, flags=re.IGNORECASE)
+
+    def switch_word(self, match, tokens: list):
+        if self.was_switched:
+            ret_val = tokens.pop(0)
+            self.was_switched = False
+            return ret_val
+        if len(tokens) <= 2:
+            return match.group(0)
+        if random.random() < self.probability:
+            tokens.pop(0)
+            ret_val = tokens[0]
+            tokens[0] = match.group(0)
+            self.was_switched = True
+        else:
+            ret_val = tokens.pop(0)
+        return ret_val
