@@ -89,3 +89,39 @@ class TextWordSwitchPerturbator(BlackboxTextPerturbator):
         else:
             ret_val = tokens.pop(0)
         return ret_val
+
+
+class TextCharacterSwitchPerturbator(BlackboxTextPerturbator):
+    def __init__(self, probability=0.2):
+        self.probability = probability
+        self.was_switched = False
+
+    def apply(self, original_input):
+        return re.sub('(?<!\w)\w+(?=\W|$)',
+                      lambda match: self.create_word_with_characters_switched(match),
+                      original_input, flags=re.IGNORECASE)
+
+    def create_word_with_characters_switched(self, match):
+
+        text = match.group(0)
+        tokens = re.findall('\w', text, flags=re.IGNORECASE)
+
+        return re.sub('\w',
+                      lambda match: self.switch_characters(match, tokens),
+                      text, flags=re.IGNORECASE)
+
+    def switch_characters(self, match, tokens):
+        if self.was_switched:
+            ret_val = tokens.pop(0)
+            self.was_switched = False
+            return ret_val
+        if len(tokens) <= 2:
+            return match.group(0)
+        if random.random() < self.probability:
+            tokens.pop(0)
+            ret_val = tokens[0]
+            tokens[0] = match.group(0)
+            self.was_switched = True
+        else:
+            ret_val = tokens.pop(0)
+        return ret_val
