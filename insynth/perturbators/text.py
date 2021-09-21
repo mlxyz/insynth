@@ -125,3 +125,54 @@ class TextCharacterSwitchPerturbator(BlackboxTextPerturbator):
         else:
             ret_val = tokens.pop(0)
         return ret_val
+
+
+class TextPunctuationErrorPerturbator(BlackboxTextPerturbator):
+
+    def __init__(self, probability=0.2):
+        self.probability = probability
+
+    def apply(self, original_input):
+        original_input = self.apply_apostrophe_error(original_input)
+        original_input = self.apply_period_error(original_input)
+        original_input = self.apply_comma_error(original_input)
+        original_input = self.apply_hyphen_error(original_input)
+        original_input = self.apply_common_errors(original_input)
+        return original_input
+
+    def apply_apostrophe_error(self, text_input):
+        return re.sub('(?<!\w)\w{3,}s(?=\W|$)',
+                      lambda match: match.group(0)[:-1] + '\'' + match.group(0)[-1:]
+                      if random.random() < self.probability else match.group(0),
+                      text_input, flags=re.IGNORECASE)
+
+    def apply_period_error(self, text_input):
+        return re.sub('\.',
+                      lambda match: random.choice([',', ';'])
+                      if random.random() < self.probability else match.group(0),
+                      text_input, flags=re.IGNORECASE)
+
+    def apply_comma_error(self, text_input):
+        return re.sub(',',
+                      lambda match: random.choice(['', ';'])
+                      if random.random() < self.probability else match.group(0),
+                      text_input, flags=re.IGNORECASE)
+
+    def apply_common_errors(self, text_input):
+        common_error_words = [
+            'they\'re',
+            'you\'re',
+            'it\'s',
+            'he\'s',
+        ]
+        joined_common_error_words = '|'.join(common_error_words)
+        return re.sub(f'(?<!\w)({joined_common_error_words})(?=\W|$)',
+                      lambda match: match.group(0).replace('\'', '')
+                      if random.random() < self.probability else match.group(0),
+                      text_input, flags=re.IGNORECASE)
+
+    def apply_hyphen_error(self, text_input):
+        return re.sub('-|–',
+                      lambda match: '–' if match.group(0) == '-' else '–'
+                      if random.random() < self.probability else match.group(0),
+                      text_input, flags=re.IGNORECASE)
