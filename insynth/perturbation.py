@@ -4,7 +4,8 @@ import numpy as np
 from tensorflow import keras
 import tensorflow as tf
 
-from insynth.metrics.coverage.neuron import NeuronCoverageCalculator, StrongNeuronActivationCoverageCalculator
+from insynth.metrics.coverage.neuron import NeuronCoverageCalculator, StrongNeuronActivationCoverageCalculator, \
+    NeuronBoundaryCoverageCalculator, KMultiSectionNeuronCoverageCalculator
 
 
 class AbstractBlackboxPerturbator(ABC):
@@ -69,7 +70,9 @@ class WhiteboxTextPerturbator(AbstractWhiteboxPerturbator):
 
 COVERAGE_CRITERIA_TO_CALCULATOR_CLASS = {
     'NC': NeuronCoverageCalculator,
-    'SNAC': StrongNeuronActivationCoverageCalculator
+    'SNAC': StrongNeuronActivationCoverageCalculator,
+    'NBC': NeuronBoundaryCoverageCalculator,
+    'KMSNC': KMultiSectionNeuronCoverageCalculator
 }
 
 
@@ -87,10 +90,11 @@ class GenericDeepXplorePerturbator(AbstractWhiteboxPerturbator):
         self.model2_coverage_calculator = calculator_class(self.model2)
         self.model3_coverage_calculator = calculator_class(self.model3)
 
-        if coverage_criteria == 'SNAC':
-            self.model1_coverage_calculator.update_neuron_bounds(snac_data)
-            self.model2_coverage_calculator.update_neuron_bounds(snac_data)
-            self.model3_coverage_calculator.update_neuron_bounds(snac_data)
+        if coverage_criteria != 'NC':
+            for image in snac_data:
+                self.model1_coverage_calculator.update_neuron_bounds(image)
+                self.model2_coverage_calculator.update_neuron_bounds(image)
+                self.model3_coverage_calculator.update_neuron_bounds(image)
 
     def apply(self, original_input, force_mutation=False):
         gen_img = original_input
