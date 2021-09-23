@@ -5,7 +5,7 @@ from tensorflow import keras
 import tensorflow as tf
 
 from insynth.metrics.coverage.neuron import NeuronCoverageCalculator, StrongNeuronActivationCoverageCalculator, \
-    NeuronBoundaryCoverageCalculator, KMultiSectionNeuronCoverageCalculator
+    NeuronBoundaryCoverageCalculator, KMultiSectionNeuronCoverageCalculator, TopKNeuronCoverageCalculator
 
 
 class AbstractBlackboxPerturbator(ABC):
@@ -72,7 +72,8 @@ COVERAGE_CRITERIA_TO_CALCULATOR_CLASS = {
     'NC': NeuronCoverageCalculator,
     'SNAC': StrongNeuronActivationCoverageCalculator,
     'NBC': NeuronBoundaryCoverageCalculator,
-    'KMSNC': KMultiSectionNeuronCoverageCalculator
+    'KMSNC': KMultiSectionNeuronCoverageCalculator,
+    'TKNC': TopKNeuronCoverageCalculator
 }
 
 
@@ -90,7 +91,7 @@ class GenericDeepXplorePerturbator(AbstractWhiteboxPerturbator):
         self.model2_coverage_calculator = calculator_class(self.model2)
         self.model3_coverage_calculator = calculator_class(self.model3)
 
-        if coverage_criteria != 'NC':
+        if coverage_criteria != 'NC' and coverage_criteria != 'TKNC':
             for image in snac_data:
                 self.model1_coverage_calculator.update_neuron_bounds(image)
                 self.model2_coverage_calculator.update_neuron_bounds(image)

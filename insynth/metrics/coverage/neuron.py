@@ -298,3 +298,52 @@ class NeuronBoundaryCoverageCalculator(AbstractCoverageCalculator):
             for index in range(num_neurons(layer.output_shape)):  # product of dims
                 coverage_dict[(layer.name, index)] = (False, False)
         return coverage_dict
+
+
+class TopKNeuronCoverageCalculator(AbstractCoverageCalculator):
+    def get_random_uncovered_neuron(self):
+        uncovered_neurons = []
+        for layer in get_layers_with_neurons(self.model):
+            for neuron_index in range(num_neurons(layer.output_shape)):
+                if neuron_index not in self.coverage_dict[layer.name]:
+                    uncovered_neurons.append((layer.name, neuron_index))
+        if uncovered_neurons:
+            return random.choice(uncovered_neurons)
+        else:
+            return None
+
+    def __init__(self, model, k=3):
+        super().__init__(model)
+        self._layers_with_neurons = get_layers_with_neurons(self.model)
+        self.coverage_dict = self._init_dict(model)
+        self.k = k
+
+    def _init_dict(self, model) -> dict:
+        coverage_dict = {}
+        for layer in get_layers_with_neurons(model):
+            coverage_dict[layer.name] = set()
+        return coverage_dict
+
+    def update_coverage(self, input_data):
+        layers = self._layers_with_neurons
+        layer_names = [layer.name for layer in layers]
+
+        intermediate_layer_activations = get_model_activations(self.model, input_data)
+
+        for layer_name, intermediate_layer_output in zip(layer_names, intermediate_layer_activations):
+            layer_activations = intermediate_layer_output[0]
+            neuron_activations = []
+            for neuron_index in range(num_neurons(layer_activations.shape)):
+                neuron_activation = layer_activations[np.unravel_index(neuron_index, layer_activations.shape)]
+                neuron_activations.append((neuron_index, neuron_activation))
+            self.coverage_dict[layer_name] |= set(
+                map(lambda x: x[0], sorted(neuron_activations, key=lambda x: x[1])[-self.k:]))
+
+    def get_coverage(self) -> dict:
+        top_k_neurons = sum(len(layer) for layer in self.coverage_dict.values())
+        total_neurons = sum(num_neurons(layer.output_shape) for layer in get_layers_with_neurons(self.model))
+        return {
+            'total_neurons': total_neurons,
+            'top_k_neurons': top_k_neurons,
+            'top_k_neuron_coverage_percentage': top_k_neurons / total_neurons
+        }
