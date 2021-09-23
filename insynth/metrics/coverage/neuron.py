@@ -133,7 +133,7 @@ class StrongNeuronActivationCoverageCalculator(AbstractCoverageCalculator):
         }
 
 
-class KMultiSectionNeuronCoverage(AbstractCoverageCalculator):
+class KMultiSectionNeuronCoverageCalculator(AbstractCoverageCalculator):
     def __init__(self, model, k=3):
         super().__init__(model)
         self.k = k
@@ -158,7 +158,11 @@ class KMultiSectionNeuronCoverage(AbstractCoverageCalculator):
                         self.coverage_dict[(layer_name, neuron_index)][activated_section] = True
 
     def get_random_uncovered_neuron(self):
-        pass
+        uncovered_neurons = [key for key, covered in self.coverage_dict.items() if not all(covered)]
+        if uncovered_neurons:
+            return random.choice(uncovered_neurons)
+        else:
+            return random.choice(list(self.coverage_dict.keys()))
 
     def update_neuron_bounds(self, input_data):
         layers = self._layers_with_neurons
@@ -222,7 +226,11 @@ class NeuronBoundaryCoverageCalculator(AbstractCoverageCalculator):
         self.neuron_bounds_dict = _init_dict(model)
 
     def get_random_uncovered_neuron(self):
-        return get_random_uncovered_neuron(self.coverage_dict)
+        uncovered_neurons = [key for key, covered in self.coverage_dict.items() if not all(covered)]
+        if uncovered_neurons:
+            return random.choice(uncovered_neurons)
+        else:
+            return random.choice(list(self.coverage_dict.keys()))
 
     def update_neuron_bounds(self, input_data):
         layers = self._layers_with_neurons
