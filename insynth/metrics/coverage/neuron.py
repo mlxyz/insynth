@@ -347,3 +347,40 @@ class TopKNeuronCoverageCalculator(AbstractCoverageCalculator):
             'top_k_neurons': top_k_neurons,
             'top_k_neuron_coverage_percentage': top_k_neurons / total_neurons
         }
+
+
+class TopKNeuronPatternsCalculator(AbstractCoverageCalculator):
+    def get_random_uncovered_neuron(self):
+        pass
+
+    def __init__(self, model, k=3):
+        super().__init__(model)
+        self.k = k
+        self.coverage_dict = self._init_dict()
+
+    def _init_dict(self) -> set:
+        coverage_dict = set()
+        return coverage_dict
+
+    def update_coverage(self, input_data):
+        self._layers_with_neurons = get_layers_with_neurons(self.model)
+        layers = self._layers_with_neurons
+        layer_names = [layer.name for layer in layers]
+
+        intermediate_layer_activations = get_model_activations(self.model, input_data)
+        neuron_activations = []
+        for layer_name, intermediate_layer_output in zip(layer_names, intermediate_layer_activations):
+            layer_activations = intermediate_layer_output[0]
+            layer_neuron_activations = []
+            for neuron_index in range(num_neurons(layer_activations.shape)):
+                neuron_activation = layer_activations[np.unravel_index(neuron_index, layer_activations.shape)]
+                layer_neuron_activations.append((neuron_index, neuron_activation))
+            neuron_activations.extend(
+                map(lambda x: layer_name + '_' + str(x[0]),
+                    sorted(layer_neuron_activations, key=lambda x: x[1])[-self.k:]))
+        self.coverage_dict |= {tuple(neuron_activations)}
+
+    def get_coverage(self) -> dict:
+        return {
+            'total_patterns': len(self.coverage_dict),
+        }
