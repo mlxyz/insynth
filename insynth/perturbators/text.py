@@ -1,7 +1,6 @@
 import random
 import re
 
-from insynth.input import TextInput
 from insynth.perturbation import BlackboxTextPerturbator
 
 STOP_WORDS = ['i', 'me', 'and']
@@ -21,8 +20,8 @@ class TextTypoPerturbator(BlackboxTextPerturbator):
                 else:
                     self.misspell_map[correct_word].append(line.lower())
 
-    def apply(self, original_input: TextInput):
-        new_text = original_input.text
+    def apply(self, original_input: str):
+        new_text = original_input
         for correct_word, misspellings in self.misspell_map.items():
             new_text = re.sub('(?<!\w)' + re.escape(correct_word) + '(?=\W|$)',
                               lambda match: random.choice(
@@ -35,29 +34,145 @@ class TextCasePerturbator(BlackboxTextPerturbator):
     def __init__(self, probability=0.2):
         self.probability = probability
 
-    def apply(self, original_input: TextInput, probability=0.2):
+    def apply(self, original_input: str, probability=0.2):
         return ''.join((x.lower() if x.isupper() else x.upper()) if random.random() < probability else x for x in
-                       original_input.text)
+                       original_input)
 
 
 class TextWordRemovalPerturbator(BlackboxTextPerturbator):
     def __init__(self, probability=0.2):
         self.probability = probability
 
-    def apply(self, original_input: TextInput):
+    def apply(self, original_input: str):
         return re.sub('(?<!\w)\w+(?=\W|$)',
                       lambda match: '' if random.random() < self.probability else match.group(0),
-                      original_input.text, flags=re.IGNORECASE)
+                      original_input, flags=re.IGNORECASE)
 
 
 class TextStopWordRemovalPerturbator(BlackboxTextPerturbator):
     def __init__(self, probability=0.2):
         self.probability = probability
 
-    def apply(self, original_input: TextInput):
-        new_text = original_input.text
+    def apply(self, original_input: str):
+        new_text = original_input
         for stop_word in STOP_WORDS:
             new_text = re.sub('(?<!\w)' + re.escape(stop_word) + '(?=\W|$)',
                               lambda match: '' if random.random() < self.probability else match.group(0),
-                              original_input.text, flags=re.IGNORECASE)
+                              original_input, flags=re.IGNORECASE)
         return new_text
+
+
+class TextWordSwitchPerturbator(BlackboxTextPerturbator):
+    def __init__(self, probability=0.2):
+        self.probability = probability
+        self.was_switched = False
+
+    def apply(self, original_input):
+        tokens = re.findall('(?<!\w)\w+(?=\W|$)', original_input, flags=re.IGNORECASE)
+
+        return re.sub('(?<!\w)\w+(?=\W|$)',
+                      lambda match: self.switch_word(match, tokens),
+                      original_input, flags=re.IGNORECASE)
+
+    def switch_word(self, match, tokens: list):
+        if self.was_switched:
+            ret_val = tokens.pop(0)
+            self.was_switched = False
+            return ret_val
+        if len(tokens) <= 2:
+            return match.group(0)
+        if random.random() < self.probability:
+            tokens.pop(0)
+            ret_val = tokens[0]
+            tokens[0] = match.group(0)
+            self.was_switched = True
+        else:
+            ret_val = tokens.pop(0)
+        return ret_val
+
+
+class TextCharacterSwitchPerturbator(BlackboxTextPerturbator):
+    def __init__(self, probability=0.2):
+        self.probability = probability
+        self.was_switched = False
+
+    def apply(self, original_input):
+        return re.sub('(?<!\w)\w+(?=\W|$)',
+                      lambda match: self.create_word_with_characters_switched(match),
+                      original_input, flags=re.IGNORECASE)
+
+    def create_word_with_characters_switched(self, match):
+
+        text = match.group(0)
+        tokens = re.findall('\w', text, flags=re.IGNORECASE)
+
+        return re.sub('\w',
+                      lambda match: self.switch_characters(match, tokens),
+                      text, flags=re.IGNORECASE)
+
+    def switch_characters(self, match, tokens):
+        if self.was_switched:
+            ret_val = tokens.pop(0)
+            self.was_switched = False
+            return ret_val
+        if len(tokens) <= 2:
+            return match.group(0)
+        if random.random() < self.probability:
+            tokens.pop(0)
+            ret_val = tokens[0]
+            tokens[0] = match.group(0)
+            self.was_switched = True
+        else:
+            ret_val = tokens.pop(0)
+        return ret_val
+
+
+class TextPunctuationErrorPerturbator(BlackboxTextPerturbator):
+
+    def __init__(self, probability=0.2):
+        self.probability = probability
+
+    def apply(self, original_input):
+        original_input = self.apply_apostrophe_error(original_input)
+        original_input = self.apply_period_error(original_input)
+        original_input = self.apply_comma_error(original_input)
+        original_input = self.apply_hyphen_error(original_input)
+        original_input = self.apply_common_errors(original_input)
+        return original_input
+
+    def apply_apostrophe_error(self, text_input):
+        return re.sub('(?<!\w)\w{3,}s(?=\W|$)',
+                      lambda match: match.group(0)[:-1] + '\'' + match.group(0)[-1:]
+                      if random.random() < self.probability else match.group(0),
+                      text_input, flags=re.IGNORECASE)
+
+    def apply_period_error(self, text_input):
+        return re.sub('\.',
+                      lambda match: random.choice([',', ';'])
+                      if random.random() < self.probability else match.group(0),
+                      text_input, flags=re.IGNORECASE)
+
+    def apply_comma_error(self, text_input):
+        return re.sub(',',
+                      lambda match: random.choice(['', ';'])
+                      if random.random() < self.probability else match.group(0),
+                      text_input, flags=re.IGNORECASE)
+
+    def apply_common_errors(self, text_input):
+        common_error_words = [
+            'they\'re',
+            'you\'re',
+            'it\'s',
+            'he\'s',
+        ]
+        joined_common_error_words = '|'.join(common_error_words)
+        return re.sub(f'(?<!\w)({joined_common_error_words})(?=\W|$)',
+                      lambda match: match.group(0).replace('\'', '')
+                      if random.random() < self.probability else match.group(0),
+                      text_input, flags=re.IGNORECASE)
+
+    def apply_hyphen_error(self, text_input):
+        return re.sub('-|–',
+                      lambda match: '–' if match.group(0) == '-' else '–'
+                      if random.random() < self.probability else match.group(0),
+                      text_input, flags=re.IGNORECASE)

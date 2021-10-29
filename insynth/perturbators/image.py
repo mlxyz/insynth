@@ -1,15 +1,14 @@
 import io
 import random
 
-from insynth.input import ImageInput
 from insynth.perturbation import BlackboxImagePerturbator, GenericDeepXplorePerturbator, WhiteboxImagePerturbator
-from PIL import Image, ImageEnhance, ImageDraw
+from PIL import Image, ImageEnhance, ImageDraw, ImageOps
 import numpy as np
 
 
 class ImageNoisePerturbator(BlackboxImagePerturbator):
-    def apply(self, original_input: ImageInput):
-        with original_input.image as img:
+    def apply(self, original_input: Image):
+        with original_input as img:
             image = np.array(img)
             s_vs_p = 0.5
             amount = 0.004
@@ -29,21 +28,34 @@ class ImageNoisePerturbator(BlackboxImagePerturbator):
 
 
 class ImageBrightnessPerturbator(BlackboxImagePerturbator):
-    def apply(self, original_input: ImageInput):
-        with original_input.image as image:
+    def apply(self, original_input: Image):
+        with original_input as image:
             return ImageEnhance.Brightness(image).enhance(1.5)
 
 
 class ImageContrastPerturbator(BlackboxImagePerturbator):
-    def apply(self, original_input: ImageInput):
-        with original_input.image as image:
+    def apply(self, original_input: Image):
+        with original_input as image:
             return ImageEnhance.Contrast(image).enhance(1.5)
 
 
 class ImageSharpnessPerturbator(BlackboxImagePerturbator):
-    def apply(self, original_input: ImageInput):
-        with original_input.image as image:
+    def apply(self, original_input: Image):
+        with original_input as image:
             return ImageEnhance.Sharpness(image).enhance(1.5)
+
+
+class ImageFlipPerturbator(BlackboxImagePerturbator):
+    def __init__(self, probability=0.2):
+        self.probability = probability
+
+    def apply(self, original_input: Image):
+        with original_input.copy() as image:
+            if random.random() < self.probability:
+                image = ImageOps.flip(image)
+            if random.random() < self.probability:
+                image = ImageOps.mirror(image)
+            return image
 
 
 class ImageOcclusionPerturbator(BlackboxImagePerturbator):
@@ -53,9 +65,9 @@ class ImageOcclusionPerturbator(BlackboxImagePerturbator):
         self.max_height = max_height
         self.color = color
 
-    def apply(self, original_input: ImageInput):
+    def apply(self, original_input: Image):
         average_occlusion_size = (self.max_width / 2) * (self.max_height / 2)
-        with original_input.image.copy() as image:
+        with original_input.copy() as image:
             image_width, image_height = image.size
             number_occlusions = int(image_width * image_height * self.probability / average_occlusion_size)
             draw = ImageDraw.Draw(image)
@@ -74,9 +86,9 @@ class ImageArtefactPerturbator(BlackboxImagePerturbator):
     def __init__(self, probability=0.2):
         self.probability = probability
 
-    def apply(self, original_input):
+    def apply(self, original_input: Image):
         buffer = io.BytesIO()
-        with original_input.image as image:
+        with original_input as image:
             image.save(buffer, 'JPEG', quality=int(100 - self.probability * 100))
         buffer.flush()
         buffer.seek(0)
@@ -87,8 +99,8 @@ class ImagePixelizePerturbator(BlackboxImagePerturbator):
     def __init__(self, factor=0.2):
         self.factor = factor
 
-    def apply(self, original_input):
-        with original_input.image as image:
+    def apply(self, original_input: Image):
+        with original_input as image:
             image_width, image_height = image.size
             image_small = image.resize((int(image_width * (1 - self.factor)), int(image_height * (1 - self.factor))),
                                        resample=Image.BILINEAR)

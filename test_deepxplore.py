@@ -83,7 +83,8 @@ model3.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, validation_sp
 
 deepxplore = DeepXploreImagePerturbator(model1, model2, model3, 'SNAC', x_train[:1000])
 coverage_calculator = StrongNeuronActivationCoverageCalculator(model1)
-coverage_calculator.update_neuron_bounds(x_train[:1000])
+for image in x_train[:1000]:
+    coverage_calculator.update_neuron_bounds(np.expand_dims(image, axis=0))
 for image in x_test[:10]:
     input_image = np.expand_dims(image, axis=0)
     coverage_calculator.update_coverage(input_image)
