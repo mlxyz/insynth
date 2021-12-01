@@ -1,8 +1,6 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
-from tensorflow import keras
-import tensorflow as tf
 
 from insynth.metrics.coverage.neuron import NeuronCoverageCalculator, StrongNeuronActivationCoverageCalculator, \
     NeuronBoundaryCoverageCalculator, KMultiSectionNeuronCoverageCalculator, TopKNeuronCoverageCalculator, \
@@ -10,24 +8,34 @@ from insynth.metrics.coverage.neuron import NeuronCoverageCalculator, StrongNeur
 
 
 class AbstractBlackboxPerturbator(ABC):
+    def __init__(self, p=0.5):
+        self.p = p
+
     @abstractmethod
     def apply(self, original_input):
         pass
 
 
 class BlackboxImagePerturbator(AbstractBlackboxPerturbator):
+    def __init__(self, p=0.5):
+        super().__init__(p)
+
     @abstractmethod
     def apply(self, original_input):
         pass
 
 
 class BlackboxAudioPerturbator(AbstractBlackboxPerturbator):
+    def __init__(self, p=0.5):
+        super().__init__(p)
     @abstractmethod
     def apply(self, original_input):
         pass
 
 
 class BlackboxTextPerturbator(AbstractBlackboxPerturbator):
+    def __init__(self, p=0.5):
+        super().__init__(p)
     @abstractmethod
     def apply(self, original_input):
         pass
@@ -80,6 +88,7 @@ COVERAGE_CRITERIA_TO_CALCULATOR_CLASS = {
 
 
 class GenericDeepXplorePerturbator(AbstractWhiteboxPerturbator):
+
     def __init__(self, model1, model2, model3, coverage_criteria, snac_data=None):
         super().__init__(model1)
         self.model1 = model1
@@ -100,6 +109,8 @@ class GenericDeepXplorePerturbator(AbstractWhiteboxPerturbator):
                 self.model3_coverage_calculator.update_neuron_bounds(image)
 
     def apply(self, original_input, force_mutation=False):
+        from tensorflow import keras
+        import tensorflow as tf
         gen_img = original_input
         label1, label2, label3 = np.argmax(self.model1.predict(gen_img)[0]), np.argmax(
             self.model2.predict(gen_img)[0]), np.argmax(

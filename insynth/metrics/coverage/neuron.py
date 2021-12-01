@@ -4,7 +4,6 @@ from collections import defaultdict
 import numpy as np
 
 from insynth.metrics.coverage.coverage_calculator import AbstractCoverageCalculator
-from tensorflow import keras
 
 
 def num_neurons(shape):
@@ -25,6 +24,7 @@ def get_layers_with_neurons(model):
 
 
 def get_model_activations(model, input_data):
+    from tensorflow import keras
     layers = get_layers_with_neurons(model)
     intermediate_layer_model = keras.models.Model(inputs=model.input,
                                                   outputs=[layer.output for layer in

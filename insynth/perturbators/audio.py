@@ -1,17 +1,30 @@
-import functools
 import math
-from audiomentations.augmentations.transforms import AddBackgroundNoise,  ApplyImpulseResponse
-from audiomentations.core.transforms_interface import BaseWaveformTransform
-from audiomentations.core.utils import get_file_paths
+import random
 
 import numpy as np
-from audiomentations import AddGaussianNoise, Mp3Compression, PitchShift, ClippingDistortion, Gain, AddShortNoises
+from audiomentations import Mp3Compression, PitchShift, ClippingDistortion, Gain, AddShortNoises
+from audiomentations.augmentations.transforms import AddBackgroundNoise, ApplyImpulseResponse
+from audiomentations.core.utils import get_file_paths
+from scipy.stats import norm
+
 from insynth.perturbation import BlackboxAudioPerturbator, GenericDeepXplorePerturbator, WhiteboxAudioPerturbator
 
 
 class AudioBackgroundWhiteNoisePerturbator(BlackboxAudioPerturbator):
-    def apply(self, original_input, noise_level=0.1):
-        signal = original_input
+    def __init__(self, p=0.5, noise_prob=norm, noise_prob_args={'loc': 0.2, 'scale': 0.2}) -> None:
+        super().__init__(p=p)
+        self.noise_prob = noise_prob
+        self.noise_prob_args = noise_prob_args
+
+    def apply(self, original_input):
+        signal, sample_rate = original_input
+
+        if random.random() > self.p:
+            return signal
+
+        noise_level = self.noise_prob.rvs(**self.noise_prob_args)
+        noise_level = max(min(1.0, noise_level), 0.0)
+
         RMS = math.sqrt(np.mean(signal ** 2))
         noise = np.random.normal(0, RMS * noise_level, signal.shape[0])
         signal_noise = signal + noise
@@ -23,46 +36,105 @@ class DeepXploreAudioPerturbator(GenericDeepXplorePerturbator, WhiteboxAudioPert
         return grads
 
 
-class AudioGaussianBackgroundNoisePerturbator(BlackboxAudioPerturbator):
-    def apply(self, original_input):
-        signal, sample_rate = original_input
-        op = AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.015, p=1.0)
-        return op(signal, sample_rate=sample_rate)
-
-
 class AudioCompressionPerturbator(BlackboxAudioPerturbator):
+    def __init__(self, p=0.5, compression_prob=norm, compression_prob_args={'loc': 80, 'scale': 40}) -> None:
+        super().__init__(p=p)
+        self.compression_prob = compression_prob
+        self.compression_prob_args = compression_prob_args
+
     def apply(self, original_input):
         signal, sample_rate = original_input
-        op = Mp3Compression(p=1.0, min_bitrate=8, max_bitrate=8)
+
+        if random.random() > self.p:
+            return signal
+
+        compression_rate = self.compression_prob.rvs(
+            **self.compression_prob_args)
+        compression_rate = min(
+            Mp3Compression.SUPPORTED_BITRATES, key=lambda x: abs(x - compression_rate))
+
+        op = Mp3Compression(p=1.0, min_bitrate=compression_rate,
+                            max_bitrate=compression_rate, backend='lameenc')
         return op(signal, sample_rate)
 
 
 class AudioPitchPerturbator(BlackboxAudioPerturbator):
+    def __init__(self, p=0.5, pitch_prob=norm, pitch_prob_args={'loc': 0, 'scale': 8}) -> None:
+        super().__init__(p=p)
+        self.pitch_prob = pitch_prob
+        self.pitch_prob_args = pitch_prob_args
+
     def apply(self, original_input):
         signal, sample_rate = original_input
-        op = PitchShift(p=1.0, min_semitones=-4, max_semitones=-4)
+
+        if random.random() > self.p:
+            return signal
+
+        pitch_shift = self.pitch_prob.rvs(**self.pitch_prob_args)
+        pitch_shift = int(max(min(12, pitch_shift), -12))
+
+        op = PitchShift(p=1.0, min_semitones=pitch_shift,
+                        max_semitones=pitch_shift)
         return op(signal, sample_rate)
 
 
 class AudioClippingPerturbator(BlackboxAudioPerturbator):
+    def __init__(self, p=0.5, clipping_prob=norm, clipping_prob_args={'loc': 20, 'scale': 30}) -> None:
+        super().__init__(p=p)
+        self.clipping_prob = clipping_prob
+        self.clipping_prob_args = clipping_prob_args
+
     def apply(self, original_input):
         signal, sample_rate = original_input
-        op = ClippingDistortion(p=1.0)
+
+        if random.random() > self.p:
+            return signal
+
+        clipping_percentile = self.clipping_prob.rvs(**self.clipping_prob_args)
+        clipping_percentile = max(min(80, clipping_percentile), 0)
+
+        op = ClippingDistortion(
+            p=1.0, min_percentile_threshold=clipping_percentile, max_percentile_threshold=clipping_percentile)
         return op(signal, sample_rate)
 
 
 class AudioVolumePerturbator(BlackboxAudioPerturbator):
+    def __init__(self, p=0.5, volume_prob=norm, volume_prob_args={'loc': 0, 'scale': 10}) -> None:
+        super().__init__(p=p)
+        self.volume_prob = volume_prob
+        self.volume_prob_args = volume_prob_args
+
     def apply(self, original_input):
         signal, sample_rate = original_input
-        op = Gain(p=1.0)
+
+        if random.random() > self.p:
+            return signal
+
+        volume_shift = self.volume_prob.rvs(**self.volume_prob_args)
+        volume_shift = max(min(20, volume_shift), -20)
+
+        op = Gain(p=1.0, min_gain_in_db=volume_shift,
+                  max_gain_in_db=volume_shift)
         return op(signal, sample_rate)
 
 
 class AudioEchoPerturbator(BlackboxAudioPerturbator):
+    def __init__(self, p=0.5, echo_prob=norm, echo_prob_args={'loc': 1.0, 'scale': 2.0}) -> None:
+        super().__init__(p=p)
+        self.echo_prob = echo_prob
+        self.echo_prob_args = echo_prob_args
+
     def apply(self, original_input):
         signal, sample_rate = original_input
+
+        if random.random() > self.p:
+            return signal
+
+        echo_delay = self.echo_prob.rvs(**self.echo_prob_args)
+        echo_delay = max(min(5.0, echo_delay), 0.0)
+
         output_audio = np.zeros(len(signal))
-        output_delay = 1.0 * sample_rate
+        output_delay = echo_delay * sample_rate
 
         for count, e in enumerate(signal):
             output_audio[count] = e + signal[count - int(output_delay)]
@@ -71,31 +143,35 @@ class AudioEchoPerturbator(BlackboxAudioPerturbator):
 
 
 class AudioShortNoisePerturbator(BlackboxAudioPerturbator):
-    def __init__(self, p=1.0, types=[]) -> None:
+    def __init__(self, p=0.5, noise_types=[]) -> None:
         super().__init__()
         self.p = p
-        self.types = types
+        self.noise_types = noise_types
         self.sound_file_paths = []
-        for type in types:
+        for type in noise_types:
             self.sound_file_paths.extend(get_file_paths(
                 f'data/audio/background_noise/{type}'))
         self.sound_file_paths = [str(p) for p in self.sound_file_paths]
-        
+
     def apply(self, original_input):
         signal, sample_rate = original_input
+
+        if random.random() > self.p:
+            return signal
+
         op = AddShortNoises(
             sounds_path='data/audio/background_noise/esc-50/', p=1.0)
-        op.sound_file_paths=self.sound_file_paths
+        op.sound_file_paths = self.sound_file_paths  # overwrite files to sample from
         return op(signal, sample_rate=sample_rate)
 
 
 class AudioBackgroundNoisePerturbator(BlackboxAudioPerturbator):
-    def __init__(self, p=1.0, types=[]) -> None:
+    def __init__(self, p=0.5, noise_types=[]) -> None:
         super().__init__()
         self.p = p
-        self.types = types
+        self.noise_types = noise_types
         self.sound_file_paths = []
-        for type in types:
+        for type in noise_types:
             self.sound_file_paths.extend(get_file_paths(
                 f'data/audio/background_noise/{type}'))
         self.sound_file_paths = [str(p) for p in self.sound_file_paths]
@@ -103,26 +179,34 @@ class AudioBackgroundNoisePerturbator(BlackboxAudioPerturbator):
     def apply(self, original_input):
         signal, sample_rate = original_input
 
+        if random.random() > self.p:
+            return signal
+
         op = AddBackgroundNoise(
             sounds_path='data/audio/background_noise/esc-50/', p=self.p)
-        op.sound_file_paths=self.sound_file_paths
+        op.sound_file_paths = self.sound_file_paths
         return op(signal, sample_rate=sample_rate)
 
 
 class AudioImpulseResponsePerturbator(BlackboxAudioPerturbator):
 
-    def __init__(self, p=1.0, types=[]) -> None:
+    def __init__(self, p=0.5, impulse_types=[]) -> None:
         super().__init__()
         self.p = p
-        self.types = types
+        self.impulse_types = impulse_types
         self.ir_files = []
-        for type in types:
+        for type in impulse_types:
             self.ir_files.extend(get_file_paths(
                 f'data/audio/pulse_response/{type}'))
         self.ir_files = [str(p) for p in self.ir_files]
 
     def apply(self, original_input):
         signal, sample_rate = original_input
-        op = ApplyImpulseResponse(ir_path='data/audio/pulse_response/', p=self.p)
+
+        if random.random() > self.p:
+            return signal
+
+        op = ApplyImpulseResponse(
+            ir_path='data/audio/pulse_response/', p=self.p)
         op.ir_files = self.ir_files
         return op(signal, sample_rate)
