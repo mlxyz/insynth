@@ -3,7 +3,8 @@ import unittest
 import numpy as np
 
 from insynth.perturbators.audio import AudioBackgroundWhiteNoisePerturbator, AudioPitchPerturbator, \
-    AudioClippingPerturbator, AudioVolumePerturbator, AudioEchoPerturbator, AudioShortNoisePerturbator
+    AudioClippingPerturbator, AudioVolumePerturbator, AudioEchoPerturbator, AudioShortNoisePerturbator, \
+    AudioImpulseResponsePerturbator, AudioBackgroundNoisePerturbator
 
 
 class TestStringMethods(unittest.TestCase):
@@ -105,6 +106,26 @@ class TestStringMethods(unittest.TestCase):
 
         np.testing.assert_array_equal(output_signal, input_signal * 2)
 
+    def test_AudioBackgroundNoisePerturbator_with_noise(self):
+        input_signal = self._generate_random_audio()
+        perturbator = AudioBackgroundNoisePerturbator(p=1.0, noise_types=[''])
+        output_signal = perturbator.apply((input_signal, 44100))
+
+        np.testing.assert_raises(AssertionError, np.testing.assert_array_equal, input_signal, output_signal)
+
+    def test_AudioShortNoisePerturbator_with_noise(self):
+        input_signal = self._generate_random_audio()
+        perturbator = AudioShortNoisePerturbator(p=1.0, noise_types=[''])
+        output_signal = perturbator.apply((input_signal, 44100))
+
+        np.testing.assert_raises(AssertionError, np.testing.assert_array_equal, input_signal, output_signal)
+
+    def test_AudioImpulseResponsePerturbator_with_noise(self):
+        input_signal = self._generate_random_audio()
+        perturbator = AudioImpulseResponsePerturbator(p=1.0, impulse_types=[''])
+        output_signal = perturbator.apply((input_signal, 44100))
+
+        np.testing.assert_raises(AssertionError, np.testing.assert_array_equal, input_signal, output_signal)
 
 
 if __name__ == '__main__':

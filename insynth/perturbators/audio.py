@@ -160,7 +160,7 @@ class AudioShortNoisePerturbator(BlackboxAudioPerturbator):
             return signal
 
         op = AddShortNoises(
-            sounds_path='data/audio/background_noise/esc-50/', p=1.0)
+            sounds_path='data/audio/background_noise/', p=1.0)
         op.sound_file_paths = self.sound_file_paths  # overwrite files to sample from
         return op(signal, sample_rate=sample_rate)
 
@@ -183,7 +183,7 @@ class AudioBackgroundNoisePerturbator(BlackboxAudioPerturbator):
             return signal
 
         op = AddBackgroundNoise(
-            sounds_path='data/audio/background_noise/esc-50/', p=self.p)
+            sounds_path='data/audio/background_noise/', p=self.p)
         op.sound_file_paths = self.sound_file_paths
         return op(signal, sample_rate=sample_rate)
 
