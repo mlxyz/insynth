@@ -7,6 +7,7 @@ from audiomentations.augmentations.transforms import AddBackgroundNoise, ApplyIm
 from audiomentations.core.utils import get_file_paths
 from scipy.stats import norm
 
+from insynth.data import utils
 from insynth.perturbation import BlackboxAudioPerturbator, GenericDeepXplorePerturbator, WhiteboxAudioPerturbator
 
 
@@ -191,13 +192,16 @@ class AudioBackgroundNoisePerturbator(BlackboxAudioPerturbator):
 class AudioImpulseResponsePerturbator(BlackboxAudioPerturbator):
 
     def __init__(self, p=0.5, impulse_types=[]) -> None:
+        utils.download_and_unzip(
+            'http://www.echothief.com/wp-content/uploads/2016/06/EchoThiefImpulseResponseLibrary.zip',
+            'data/audio/pulse_response/')
         super().__init__()
         self.p = p
         self.impulse_types = impulse_types
         self.ir_files = []
         for type in impulse_types:
             self.ir_files.extend(get_file_paths(
-                f'data/audio/pulse_response/{type}'))
+                f'data/audio/pulse_response/{type}', filename_endings='wav'))
         self.ir_files = [str(p) for p in self.ir_files]
 
     def apply(self, original_input):
