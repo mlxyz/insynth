@@ -78,35 +78,47 @@ class ImageSharpnessPerturbator(BlackboxImagePerturbator):
 
 
 class ImageFlipPerturbator(BlackboxImagePerturbator):
-    def __init__(self, p=0.5):
+    def __init__(self, p=0.5, transformation_type='mirror'):
         super().__init__(p)
+        self.transformation_type = transformation_type
 
     def apply(self, original_input: Image):
+        if random.random() > self.p:
+            return original_input
         with original_input.copy() as image:
-            if random.random() < self.probability:
+            if (self.transformation_type == 'flip' or self.transformation_type == 'both') and random.random() < self.p:
                 image = ImageOps.flip(image)
-            if random.random() < self.probability:
+            if (self.transformation_type == 'mirror' or self.transformation_type == 'both') \
+                    and random.random() < self.p:
                 image = ImageOps.mirror(image)
             return image
 
 
 class ImageOcclusionPerturbator(BlackboxImagePerturbator):
-    def __init__(self, p=0.5, max_width=10, max_height=10, color='#000000'):
-        super().__init__(p=p)
-        self.probability = probability
-        self.max_width = max_width
-        self.max_height = max_height
+    def __init__(self, p=0.5, strength_prob=norm, strength_prob_args={'loc': 0.2, 'scale': 0.05}, width_prob=norm,
+                 width_prob_args={'loc': 10, 'scale': 5}, height_prob=norm,
+                 height_prob_args={'loc': 10, 'scale': 5}, color='#000000'):
+        super().__init__(p)
+        self.strength_prob = strength_prob
+        self.strength_prob_args = strength_prob_args
+        self.width_prob = width_prob
+        self.width_prob_args = width_prob_args
+        self.height_prob = height_prob
+        self.height_prob_args = height_prob_args
         self.color = color
 
     def apply(self, original_input: Image):
-        average_occlusion_size = (self.max_width / 2) * (self.max_height / 2)
+        if random.random() > self.p:
+            return original_input
         with original_input.copy() as image:
             image_width, image_height = image.size
-            number_occlusions = int(image_width * image_height * self.probability / average_occlusion_size)
+            strength = self.strength_prob.rvs(**self.strength_prob_args)
+            number_occlusions = int((image_width * image_height * strength) / (
+                    self.width_prob.mean(**self.width_prob_args) * self.height_prob.mean(**self.height_prob_args)))
             draw = ImageDraw.Draw(image)
             for _ in range(number_occlusions):
-                occlusion_width = random.randint(1, self.max_width)
-                occlusion_height = random.randint(1, self.max_height)
+                occlusion_width = int(self.width_prob.rvs(**self.width_prob_args))
+                occlusion_height = int(self.height_prob.rvs(**self.height_prob_args))
                 start_x = random.randint(0, image_width - occlusion_width)
                 start_y = random.randint(0, image_height - occlusion_height)
                 end_x = start_x + occlusion_width
@@ -115,30 +127,37 @@ class ImageOcclusionPerturbator(BlackboxImagePerturbator):
             return image
 
 
-class ImageArtefactPerturbator(BlackboxImagePerturbator):
-    def __init__(self, p=0.5):
-        super().__init__(p=p)
-        self.probability = probability
+class ImageCompressionPerturbator(BlackboxImagePerturbator):
+    def __init__(self, p=0.5, artifact_prob=norm, artifact_prob_args={'loc': 0.5, 'scale': 0.2}):
+        super().__init__(p)
+        self.artifact_prob = artifact_prob
+        self.artifact_prob_args = artifact_prob_args
 
     def apply(self, original_input: Image):
+        if random.random() > self.p:
+            return original_input
         buffer = io.BytesIO()
         with original_input as image:
-            image.save(buffer, 'JPEG', quality=int(100 - self.probability * 100))
+            image.convert('RGB').save(buffer, 'JPEG',
+                                      quality=int(100 - self.artifact_prob.rvs(**self.artifact_prob_args) * 100))
         buffer.flush()
         buffer.seek(0)
         return Image.open(buffer, formats=['JPEG'])
 
 
 class ImagePixelizePerturbator(BlackboxImagePerturbator):
-    def __init__(self, p=0.5, factor=0.2):
-        super().__init__(p=p)
-        self.factor = factor
+    def __init__(self, p=0.5, pixelize_prob=norm, pixelize_prob_args={'loc': 0.2, 'scale': 0.1}):
+        super().__init__(p)
+        self.pixelize_prob = pixelize_prob
+        self.pixelize_prob_args = pixelize_prob_args
 
     def apply(self, original_input: Image):
         with original_input as image:
             image_width, image_height = image.size
-            image_small = image.resize((int(image_width * (1 - self.factor)), int(image_height * (1 - self.factor))),
-                                       resample=Image.BILINEAR)
+            pixelize_factor = self.pixelize_prob.rvs(**self.pixelize_prob_args)
+            image_small = image.resize(
+                (int(image_width * (1 - pixelize_factor)), int(image_height * (1 - pixelize_factor))),
+                resample=Image.BILINEAR)
             return image_small.resize(image.size, Image.NEAREST)
 
 

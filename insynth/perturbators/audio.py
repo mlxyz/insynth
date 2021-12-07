@@ -207,7 +207,7 @@ class AudioImpulseResponsePerturbator(BlackboxAudioPerturbator):
         self.ir_files = []
         for type in impulse_types:
             self.ir_files.extend(get_file_paths(
-                f'data/audio/pulse_response/{type}', filename_endings='wav'))
+                f'data/audio/pulse_response/{type}',  filename_endings='wav'))
         self.ir_files = [str(p) for p in self.ir_files]
 
     def apply(self, original_input):
