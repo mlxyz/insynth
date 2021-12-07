@@ -28,6 +28,7 @@ class BlackboxImagePerturbator(AbstractBlackboxPerturbator):
 class BlackboxAudioPerturbator(AbstractBlackboxPerturbator):
     def __init__(self, p=0.5):
         super().__init__(p)
+
     @abstractmethod
     def apply(self, original_input):
         pass
@@ -36,6 +37,7 @@ class BlackboxAudioPerturbator(AbstractBlackboxPerturbator):
 class BlackboxTextPerturbator(AbstractBlackboxPerturbator):
     def __init__(self, p=0.5):
         super().__init__(p)
+
     @abstractmethod
     def apply(self, original_input):
         pass

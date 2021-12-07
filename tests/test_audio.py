@@ -7,7 +7,7 @@ from insynth.perturbators.audio import AudioBackgroundWhiteNoisePerturbator, Aud
     AudioImpulseResponsePerturbator, AudioBackgroundNoisePerturbator
 
 
-class TestStringMethods(unittest.TestCase):
+class TestAudio(unittest.TestCase):
 
     def _generate_random_audio(self):
         data = np.random.uniform(-1, 1, 44100)

@@ -1,53 +1,85 @@
 import io
 import random
 
+from scipy.stats import norm
+
 from insynth.perturbation import BlackboxImagePerturbator, GenericDeepXplorePerturbator, WhiteboxImagePerturbator
 from PIL import Image, ImageEnhance, ImageDraw, ImageOps
 import numpy as np
 
 
 class ImageNoisePerturbator(BlackboxImagePerturbator):
+    def __init__(self, p=0.5, noise_prob=norm, noise_prob_args={'loc': 0.01, 'scale': 0.005}):
+        super().__init__(p)
+        self.noise_prob = noise_prob
+        self.noise_prob_args = noise_prob_args
+
     def apply(self, original_input: Image):
+        if random.random() > self.p:
+            return original_input
         with original_input as img:
             image = np.array(img)
-            s_vs_p = 0.5
-            amount = 0.004
-            out = np.copy(image)
-            # Salt mode
-            num_salt = np.ceil(amount * image.size * s_vs_p)
+            salt_pepper_ratio = 0.5
+            amount = self.noise_prob.rvs(**self.noise_prob_args)
+            output_image_arr = np.copy(image)
+            # Salt
+            num_salt = np.ceil(amount * image.size * salt_pepper_ratio)
             coords = [np.random.randint(0, i - 1, int(num_salt))
                       for i in image.shape]
-            out[tuple(coords)] = 1
+            output_image_arr[tuple(coords)] = 1
 
-            # Pepper mode
-            num_pepper = np.ceil(amount * image.size * (1. - s_vs_p))
+            # Pepper
+            num_pepper = np.ceil(amount * image.size * (1. - salt_pepper_ratio))
             coords = [np.random.randint(0, i - 1, int(num_pepper))
                       for i in image.shape]
-            out[tuple(coords)] = 0
-            return Image.fromarray(out)
+            output_image_arr[tuple(coords)] = 0
+            return Image.fromarray(output_image_arr)
 
 
 class ImageBrightnessPerturbator(BlackboxImagePerturbator):
+    def __init__(self, p=0.5, brightness_change_prob=norm, brightness_change_prob_args={'loc': 1, 'scale': 0.5}):
+        super().__init__(p)
+        self.brightness_change_prob = brightness_change_prob
+        self.brightness_change_prob_args = brightness_change_prob_args
+
     def apply(self, original_input: Image):
+        if random.random() > self.p:
+            return original_input
         with original_input as image:
-            return ImageEnhance.Brightness(image).enhance(1.5)
+            return ImageEnhance.Brightness(image).enhance(
+                self.brightness_change_prob.rvs(**self.brightness_change_prob_args))
 
 
 class ImageContrastPerturbator(BlackboxImagePerturbator):
+    def __init__(self, p=0.5, contrast_change_prob=norm, contrast_change_prob_args={'loc': 1, 'scale': 0.5}):
+        super().__init__(p)
+        self.contrast_change_prob = contrast_change_prob
+        self.contrast_change_prob_args = contrast_change_prob_args
+
     def apply(self, original_input: Image):
+        if random.random() > self.p:
+            return original_input
         with original_input as image:
-            return ImageEnhance.Contrast(image).enhance(1.5)
+            return ImageEnhance.Contrast(image).enhance(self.contrast_change_prob.rvs(**self.contrast_change_prob_args))
 
 
 class ImageSharpnessPerturbator(BlackboxImagePerturbator):
+    def __init__(self, p=0.5, sharpness_change_prob=norm, sharpness_change_prob_args={'loc': 1, 'scale': 0.5}):
+        super().__init__(p)
+        self.sharpness_change_prob = sharpness_change_prob
+        self.sharpness_change_prob_args = sharpness_change_prob_args
+
     def apply(self, original_input: Image):
+        if random.random() > self.p:
+            return original_input
         with original_input as image:
-            return ImageEnhance.Sharpness(image).enhance(1.5)
+            return ImageEnhance.Sharpness(image).enhance(
+                self.sharpness_change_prob.rvs(**self.sharpness_change_prob_args))
 
 
 class ImageFlipPerturbator(BlackboxImagePerturbator):
-    def __init__(self, probability=0.2):
-        self.probability = probability
+    def __init__(self, p=0.5):
+        super().__init__(p)
 
     def apply(self, original_input: Image):
         with original_input.copy() as image:
@@ -59,7 +91,8 @@ class ImageFlipPerturbator(BlackboxImagePerturbator):
 
 
 class ImageOcclusionPerturbator(BlackboxImagePerturbator):
-    def __init__(self, probability=0.1, max_width=10, max_height=10, color='#000000'):
+    def __init__(self, p=0.5, max_width=10, max_height=10, color='#000000'):
+        super().__init__(p=p)
         self.probability = probability
         self.max_width = max_width
         self.max_height = max_height
@@ -83,7 +116,8 @@ class ImageOcclusionPerturbator(BlackboxImagePerturbator):
 
 
 class ImageArtefactPerturbator(BlackboxImagePerturbator):
-    def __init__(self, probability=0.2):
+    def __init__(self, p=0.5):
+        super().__init__(p=p)
         self.probability = probability
 
     def apply(self, original_input: Image):
@@ -96,7 +130,8 @@ class ImageArtefactPerturbator(BlackboxImagePerturbator):
 
 
 class ImagePixelizePerturbator(BlackboxImagePerturbator):
-    def __init__(self, factor=0.2):
+    def __init__(self, p=0.5, factor=0.2):
+        super().__init__(p=p)
         self.factor = factor
 
     def apply(self, original_input: Image):
