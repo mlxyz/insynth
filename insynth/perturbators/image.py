@@ -14,7 +14,7 @@ class ImageNoisePerturbator(BlackboxImagePerturbator):
         self.noise_prob = noise_prob
         self.noise_prob_args = noise_prob_args
 
-    def apply(self, original_input: Image):
+    def _internal_apply(self, original_input: Image):
         if random.random() > self.p:
             return original_input
         with original_input as img:
@@ -42,9 +42,7 @@ class ImageBrightnessPerturbator(BlackboxImagePerturbator):
         self.brightness_change_prob = brightness_change_prob
         self.brightness_change_prob_args = brightness_change_prob_args
 
-    def apply(self, original_input: Image):
-        if random.random() > self.p:
-            return original_input
+    def _internal_apply(self, original_input: Image):
         with original_input as image:
             return ImageEnhance.Brightness(image).enhance(
                 self.brightness_change_prob.rvs(**self.brightness_change_prob_args))
@@ -56,9 +54,7 @@ class ImageContrastPerturbator(BlackboxImagePerturbator):
         self.contrast_change_prob = contrast_change_prob
         self.contrast_change_prob_args = contrast_change_prob_args
 
-    def apply(self, original_input: Image):
-        if random.random() > self.p:
-            return original_input
+    def _internal_apply(self, original_input: Image):
         with original_input as image:
             return ImageEnhance.Contrast(image).enhance(self.contrast_change_prob.rvs(**self.contrast_change_prob_args))
 
@@ -69,9 +65,7 @@ class ImageSharpnessPerturbator(BlackboxImagePerturbator):
         self.sharpness_change_prob = sharpness_change_prob
         self.sharpness_change_prob_args = sharpness_change_prob_args
 
-    def apply(self, original_input: Image):
-        if random.random() > self.p:
-            return original_input
+    def _internal_apply(self, original_input: Image):
         with original_input as image:
             return ImageEnhance.Sharpness(image).enhance(
                 self.sharpness_change_prob.rvs(**self.sharpness_change_prob_args))
@@ -82,9 +76,7 @@ class ImageFlipPerturbator(BlackboxImagePerturbator):
         super().__init__(p)
         self.transformation_type = transformation_type
 
-    def apply(self, original_input: Image):
-        if random.random() > self.p:
-            return original_input
+    def _internal_apply(self, original_input: Image):
         with original_input.copy() as image:
             if (self.transformation_type == 'flip' or self.transformation_type == 'both') and random.random() < self.p:
                 image = ImageOps.flip(image)
@@ -107,9 +99,7 @@ class ImageOcclusionPerturbator(BlackboxImagePerturbator):
         self.height_prob_args = height_prob_args
         self.color = color
 
-    def apply(self, original_input: Image):
-        if random.random() > self.p:
-            return original_input
+    def _internal_apply(self, original_input: Image):
         with original_input.copy() as image:
             image_width, image_height = image.size
             strength = self.strength_prob.rvs(**self.strength_prob_args)
@@ -133,9 +123,7 @@ class ImageCompressionPerturbator(BlackboxImagePerturbator):
         self.artifact_prob = artifact_prob
         self.artifact_prob_args = artifact_prob_args
 
-    def apply(self, original_input: Image):
-        if random.random() > self.p:
-            return original_input
+    def _internal_apply(self, original_input: Image):
         buffer = io.BytesIO()
         with original_input as image:
             image.convert('RGB').save(buffer, 'JPEG',
@@ -151,7 +139,7 @@ class ImagePixelizePerturbator(BlackboxImagePerturbator):
         self.pixelize_prob = pixelize_prob
         self.pixelize_prob_args = pixelize_prob_args
 
-    def apply(self, original_input: Image):
+    def _internal_apply(self, original_input: Image):
         with original_input as image:
             image_width, image_height = image.size
             pixelize_factor = self.pixelize_prob.rvs(**self.pixelize_prob_args)

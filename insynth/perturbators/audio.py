@@ -17,11 +17,8 @@ class AudioBackgroundWhiteNoisePerturbator(BlackboxAudioPerturbator):
         self.noise_prob = noise_prob
         self.noise_prob_args = noise_prob_args
 
-    def apply(self, original_input):
+    def _internal_apply(self, original_input):
         signal, sample_rate = original_input
-
-        if random.random() > self.p:
-            return signal
 
         noise_level = self.noise_prob.rvs(**self.noise_prob_args)
         noise_level = max(min(1.0, noise_level), 0.0)
@@ -43,11 +40,8 @@ class AudioCompressionPerturbator(BlackboxAudioPerturbator):
         self.compression_prob = compression_prob
         self.compression_prob_args = compression_prob_args
 
-    def apply(self, original_input):
+    def _internal_apply(self, original_input):
         signal, sample_rate = original_input
-
-        if random.random() > self.p:
-            return signal
 
         compression_rate = self.compression_prob.rvs(
             **self.compression_prob_args)
@@ -65,11 +59,8 @@ class AudioPitchPerturbator(BlackboxAudioPerturbator):
         self.pitch_prob = pitch_prob
         self.pitch_prob_args = pitch_prob_args
 
-    def apply(self, original_input):
+    def _internal_apply(self, original_input):
         signal, sample_rate = original_input
-
-        if random.random() > self.p:
-            return signal
 
         pitch_shift = self.pitch_prob.rvs(**self.pitch_prob_args)
         pitch_shift = int(max(min(12, pitch_shift), -12))
@@ -85,11 +76,8 @@ class AudioClippingPerturbator(BlackboxAudioPerturbator):
         self.clipping_prob = clipping_prob
         self.clipping_prob_args = clipping_prob_args
 
-    def apply(self, original_input):
+    def _internal_apply(self, original_input):
         signal, sample_rate = original_input
-
-        if random.random() > self.p:
-            return signal
 
         clipping_percentile = self.clipping_prob.rvs(**self.clipping_prob_args)
         clipping_percentile = max(min(80, clipping_percentile), 0)
@@ -105,11 +93,8 @@ class AudioVolumePerturbator(BlackboxAudioPerturbator):
         self.volume_prob = volume_prob
         self.volume_prob_args = volume_prob_args
 
-    def apply(self, original_input):
+    def _internal_apply(self, original_input):
         signal, sample_rate = original_input
-
-        if random.random() > self.p:
-            return signal
 
         volume_shift = self.volume_prob.rvs(**self.volume_prob_args)
         volume_shift = max(min(20, volume_shift), -20)
@@ -125,11 +110,8 @@ class AudioEchoPerturbator(BlackboxAudioPerturbator):
         self.echo_prob = echo_prob
         self.echo_prob_args = echo_prob_args
 
-    def apply(self, original_input):
+    def _internal_apply(self, original_input):
         signal, sample_rate = original_input
-
-        if random.random() > self.p:
-            return signal
 
         echo_delay = self.echo_prob.rvs(**self.echo_prob_args)
         echo_delay = max(min(5.0, echo_delay), 0.0)
@@ -157,11 +139,8 @@ class AudioShortNoisePerturbator(BlackboxAudioPerturbator):
                 f'data/audio/background_noise/{type}', filename_endings='wav'))
         self.sound_file_paths = [str(p) for p in self.sound_file_paths]
 
-    def apply(self, original_input):
+    def _internal_apply(self, original_input):
         signal, sample_rate = original_input
-
-        if random.random() > self.p:
-            return signal
 
         op = AddShortNoises(
             sounds_path='data/audio/background_noise/', p=1.0)
@@ -183,11 +162,8 @@ class AudioBackgroundNoisePerturbator(BlackboxAudioPerturbator):
                 f'data/audio/background_noise/{type}', filename_endings='wav'))
         self.sound_file_paths = [str(p) for p in self.sound_file_paths]
 
-    def apply(self, original_input):
+    def _internal_apply(self, original_input):
         signal, sample_rate = original_input
-
-        if random.random() > self.p:
-            return signal
 
         op = AddBackgroundNoise(
             sounds_path='data/audio/background_noise/', p=self.p)
@@ -210,11 +186,8 @@ class AudioImpulseResponsePerturbator(BlackboxAudioPerturbator):
                 f'data/audio/pulse_response/{type}',  filename_endings='wav'))
         self.ir_files = [str(p) for p in self.ir_files]
 
-    def apply(self, original_input):
+    def _internal_apply(self, original_input):
         signal, sample_rate = original_input
-
-        if random.random() > self.p:
-            return signal
 
         op = ApplyImpulseResponse(
             ir_path='data/audio/pulse_response/', p=self.p)
