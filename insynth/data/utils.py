@@ -5,6 +5,7 @@ import urllib
 
 from tqdm import tqdm
 
+
 def download_and_unzip(url, extract_to):
     if not path.exists(extract_to):
         mkdir(extract_to)

@@ -146,12 +146,15 @@ class AudioEchoPerturbator(BlackboxAudioPerturbator):
 class AudioShortNoisePerturbator(BlackboxAudioPerturbator):
     def __init__(self, p=0.5, noise_types=[]) -> None:
         super().__init__()
+        utils.download_and_unzip(
+            'https://github.com/karoldvl/ESC-50/archive/master.zip',
+            'data/audio/background_noise/')
         self.p = p
         self.noise_types = noise_types
         self.sound_file_paths = []
         for type in noise_types:
             self.sound_file_paths.extend(get_file_paths(
-                f'data/audio/background_noise/{type}'))
+                f'data/audio/background_noise/{type}', filename_endings='wav'))
         self.sound_file_paths = [str(p) for p in self.sound_file_paths]
 
     def apply(self, original_input):
@@ -169,12 +172,15 @@ class AudioShortNoisePerturbator(BlackboxAudioPerturbator):
 class AudioBackgroundNoisePerturbator(BlackboxAudioPerturbator):
     def __init__(self, p=0.5, noise_types=[]) -> None:
         super().__init__()
+        utils.download_and_unzip(
+            'https://github.com/karoldvl/ESC-50/archive/master.zip',
+            'data/audio/background_noise/')
         self.p = p
         self.noise_types = noise_types
         self.sound_file_paths = []
         for type in noise_types:
             self.sound_file_paths.extend(get_file_paths(
-                f'data/audio/background_noise/{type}'))
+                f'data/audio/background_noise/{type}', filename_endings='wav'))
         self.sound_file_paths = [str(p) for p in self.sound_file_paths]
 
     def apply(self, original_input):
