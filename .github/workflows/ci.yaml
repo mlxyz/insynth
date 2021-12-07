@@ -1,4 +1,4 @@
-name: CI pipeline for insynth project
+name: CI
 on: [push, pull_request]
 jobs:
   run:

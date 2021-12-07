@@ -1,7 +1,8 @@
 # insynth
 
 ---
-
+![CI/CD](https://github.com/mlxyz/insynth/actions/workflows/ci.yaml/badge.svg)
+[![Known Vulnerabilities](https://snyk.io/test/github/mlxyz/insynth/badge.svg)](https://snyk.io/test/github/mlxyz/insynth)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/069d3759b9e24a468bd4f47c0c3fd02f)](https://www.codacy.com/gh/mlxyz/insynth/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=mlxyz/insynth&amp;utm_campaign=Badge_Grade)
 [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=mlxyz_insynth&metric=bugs)](https://sonarcloud.io/summary/new_code?id=mlxyz_insynth)
 [![codecov](https://codecov.io/gh/mlxyz/insynth/branch/master/graph/badge.svg?token=UCHS79CXM7)](https://codecov.io/gh/mlxyz/insynth)
