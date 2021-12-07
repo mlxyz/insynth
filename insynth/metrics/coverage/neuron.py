@@ -47,6 +47,19 @@ def get_random_uncovered_neuron(coverage_dict):
         return random.choice(coverage_dict.keys())
 
 
+def iterate_over_layer_activations(model, layers, input_data):
+    layer_names = [layer.name for layer in layers]
+    intermediate_layer_activations = get_model_activations(model, input_data)
+    return zip(layer_names, map(lambda x: x[0], intermediate_layer_activations))
+
+
+def iterate_over_neuron_activations(layer_activations):
+    activations_shape = layer_activations.shape
+    neuron_indices = range(num_neurons(activations_shape))
+    return zip(neuron_indices, list(
+        map(lambda neuron_index: layer_activations[np.unravel_index(neuron_index, activations_shape)], neuron_indices)))
+
+
 class NeuronCoverageCalculator(AbstractCoverageCalculator):
     def get_random_uncovered_neuron(self):
         return get_random_uncovered_neuron(self.coverage_dict)
@@ -58,16 +71,10 @@ class NeuronCoverageCalculator(AbstractCoverageCalculator):
         self.coverage_dict = _init_dict(model)
 
     def update_coverage(self, input_data):
-        layers = self._layers_with_neurons
-        layer_names = [layer.name for layer in layers]
 
-        intermediate_layer_activations = get_model_activations(self.model, input_data)
-
-        for layer_name, intermediate_layer_output in zip(layer_names, intermediate_layer_activations):
-            layer_activations = intermediate_layer_output[0]
-            activations_shape = layer_activations.shape
-            for neuron_index in range(num_neurons(activations_shape)):
-                neuron_activation = layer_activations[np.unravel_index(neuron_index, activations_shape)]
+        for layer_name, layer_activations in iterate_over_layer_activations(self.model, self._layers_with_neurons,
+                                                                            input_data):
+            for neuron_index, neuron_activation in iterate_over_neuron_activations(layer_activations):
                 if neuron_activation > self.activation_threshold:
                     self.coverage_dict[(layer_name, neuron_index)] = True
 
@@ -91,15 +98,10 @@ class StrongNeuronActivationCoverageCalculator(AbstractCoverageCalculator):
         return get_random_uncovered_neuron(self.coverage_dict)
 
     def update_neuron_bounds(self, input_data):
-        layers = self._layers_with_neurons
-        layer_names = [layer.name for layer in layers]
 
-        intermediate_layer_activations = get_model_activations(self.model, input_data)
-
-        for layer_name, intermediate_layer_output in zip(layer_names, intermediate_layer_activations):
-            layer_activations = intermediate_layer_output[0]
-            for neuron_index in range(num_neurons(layer_activations.shape)):
-                neuron_activation = layer_activations[np.unravel_index(neuron_index, layer_activations.shape)]
+        for layer_name, layer_activations in iterate_over_layer_activations(self.model, self._layers_with_neurons,
+                                                                            input_data):
+            for neuron_index, neuron_activation in iterate_over_neuron_activations(layer_activations):
                 neuron_position = (layer_name, neuron_index)
                 if not self.neuron_bounds_dict[neuron_position]:
                     self.neuron_bounds_dict[neuron_position] = (neuron_activation, neuron_activation)
@@ -111,15 +113,10 @@ class StrongNeuronActivationCoverageCalculator(AbstractCoverageCalculator):
                         self.neuron_bounds_dict[neuron_position] = (neuron_activation, upper)
 
     def update_coverage(self, input_data):
-        layers = self._layers_with_neurons
-        layer_names = [layer.name for layer in layers]
 
-        intermediate_layer_activations = get_model_activations(self.model, input_data)
-
-        for layer_name, intermediate_layer_output in zip(layer_names, intermediate_layer_activations):
-            layer_activations = intermediate_layer_output[0]
-            for neuron_index in range(num_neurons(layer_activations.shape)):
-                neuron_activation = layer_activations[np.unravel_index(neuron_index, layer_activations.shape)]
+        for layer_name, layer_activations in iterate_over_layer_activations(self.model, self._layers_with_neurons,
+                                                                            input_data):
+            for neuron_index, neuron_activation in iterate_over_neuron_activations(layer_activations):
                 _, high = self.neuron_bounds_dict[(layer_name, neuron_index)]
                 if neuron_activation > high:
                     self.coverage_dict[(layer_name, neuron_index)] = True
@@ -142,15 +139,9 @@ class KMultiSectionNeuronCoverageCalculator(AbstractCoverageCalculator):
         self.coverage_dict = self._init_dict(model)
 
     def update_coverage(self, input_data):
-        layers = self._layers_with_neurons
-        layer_names = [layer.name for layer in layers]
-
-        intermediate_layer_activations = get_model_activations(self.model, input_data)
-
-        for layer_name, intermediate_layer_output in zip(layer_names, intermediate_layer_activations):
-            layer_activations = intermediate_layer_output[0]
-            for neuron_index in range(num_neurons(layer_activations.shape)):
-                neuron_activation = layer_activations[np.unravel_index(neuron_index, layer_activations.shape)]
+        for layer_name, layer_activations in iterate_over_layer_activations(self.model, self._layers_with_neurons,
+                                                                            input_data):
+            for neuron_index, neuron_activation in iterate_over_neuron_activations(layer_activations):
                 lower, upper, step_size = self.neuron_bounds_dict[(layer_name, neuron_index)]
                 if step_size > 0:
                     activated_section = int((neuron_activation - lower) / step_size)
@@ -165,15 +156,9 @@ class KMultiSectionNeuronCoverageCalculator(AbstractCoverageCalculator):
             return random.choice(list(self.coverage_dict.keys()))
 
     def update_neuron_bounds(self, input_data):
-        layers = self._layers_with_neurons
-        layer_names = [layer.name for layer in layers]
-
-        intermediate_layer_activations = get_model_activations(self.model, input_data)
-
-        for layer_name, intermediate_layer_output in zip(layer_names, intermediate_layer_activations):
-            layer_activations = intermediate_layer_output[0]
-            for neuron_index in range(num_neurons(layer_activations.shape)):
-                neuron_activation = layer_activations[np.unravel_index(neuron_index, layer_activations.shape)]
+        for layer_name, layer_activations in iterate_over_layer_activations(self.model, self._layers_with_neurons,
+                                                                            input_data):
+            for neuron_index, neuron_activation in iterate_over_neuron_activations(layer_activations):
                 neuron_position = (layer_name, neuron_index)
                 if not self.neuron_bounds_dict[neuron_position]:
                     step_size = 0
@@ -233,15 +218,9 @@ class NeuronBoundaryCoverageCalculator(AbstractCoverageCalculator):
             return random.choice(list(self.coverage_dict.keys()))
 
     def update_neuron_bounds(self, input_data):
-        layers = self._layers_with_neurons
-        layer_names = [layer.name for layer in layers]
-
-        intermediate_layer_activations = get_model_activations(self.model, input_data)
-
-        for layer_name, intermediate_layer_output in zip(layer_names, intermediate_layer_activations):
-            layer_activations = intermediate_layer_output[0]
-            for neuron_index in range(num_neurons(layer_activations.shape)):
-                neuron_activation = layer_activations[np.unravel_index(neuron_index, layer_activations.shape)]
+        for layer_name, layer_activations in iterate_over_layer_activations(self.model, self._layers_with_neurons,
+                                                                            input_data):
+            for neuron_index, neuron_activation in iterate_over_neuron_activations(layer_activations):
                 neuron_position = (layer_name, neuron_index)
                 if not self.neuron_bounds_dict[neuron_position]:
                     self.neuron_bounds_dict[neuron_position] = (neuron_activation, neuron_activation)
@@ -253,15 +232,9 @@ class NeuronBoundaryCoverageCalculator(AbstractCoverageCalculator):
                         self.neuron_bounds_dict[neuron_position] = (neuron_activation, upper)
 
     def update_coverage(self, input_data):
-        layers = self._layers_with_neurons
-        layer_names = [layer.name for layer in layers]
-
-        intermediate_layer_activations = get_model_activations(self.model, input_data)
-
-        for layer_name, intermediate_layer_output in zip(layer_names, intermediate_layer_activations):
-            layer_activations = intermediate_layer_output[0]
-            for neuron_index in range(num_neurons(layer_activations.shape)):
-                neuron_activation = layer_activations[np.unravel_index(neuron_index, layer_activations.shape)]
+        for layer_name, layer_activations in iterate_over_layer_activations(self.model, self._layers_with_neurons,
+                                                                            input_data):
+            for neuron_index, neuron_activation in iterate_over_neuron_activations(layer_activations):
                 low, high = self.neuron_bounds_dict[(layer_name, neuron_index)]
                 if neuron_activation > high:
                     self.coverage_dict[(layer_name, neuron_index)] = (
@@ -325,16 +298,11 @@ class TopKNeuronCoverageCalculator(AbstractCoverageCalculator):
         return coverage_dict
 
     def update_coverage(self, input_data):
-        layers = self._layers_with_neurons
-        layer_names = [layer.name for layer in layers]
 
-        intermediate_layer_activations = get_model_activations(self.model, input_data)
-
-        for layer_name, intermediate_layer_output in zip(layer_names, intermediate_layer_activations):
-            layer_activations = intermediate_layer_output[0]
+        for layer_name, layer_activations in iterate_over_layer_activations(self.model, self._layers_with_neurons,
+                                                                            input_data):
             neuron_activations = []
-            for neuron_index in range(num_neurons(layer_activations.shape)):
-                neuron_activation = layer_activations[np.unravel_index(neuron_index, layer_activations.shape)]
+            for neuron_index, neuron_activation in iterate_over_neuron_activations(layer_activations):
                 neuron_activations.append((neuron_index, neuron_activation))
             self.coverage_dict[layer_name] |= set(
                 map(lambda x: x[0], sorted(neuron_activations, key=lambda x: x[1])[-self.k:]))
@@ -356,6 +324,7 @@ class TopKNeuronPatternsCalculator(AbstractCoverageCalculator):
     def __init__(self, model, k=3):
         super().__init__(model)
         self.k = k
+        self._layers_with_neurons = get_layers_with_neurons(self.model)
         self.coverage_dict = self._init_dict()
 
     def _init_dict(self) -> set:
@@ -363,17 +332,13 @@ class TopKNeuronPatternsCalculator(AbstractCoverageCalculator):
         return coverage_dict
 
     def update_coverage(self, input_data):
-        self._layers_with_neurons = get_layers_with_neurons(self.model)
-        layers = self._layers_with_neurons
-        layer_names = [layer.name for layer in layers]
 
-        intermediate_layer_activations = get_model_activations(self.model, input_data)
         neuron_activations = []
-        for layer_name, intermediate_layer_output in zip(layer_names, intermediate_layer_activations):
-            layer_activations = intermediate_layer_output[0]
+
+        for layer_name, layer_activations in iterate_over_layer_activations(self.model, self._layers_with_neurons,
+                                                                            input_data):
             layer_neuron_activations = []
-            for neuron_index in range(num_neurons(layer_activations.shape)):
-                neuron_activation = layer_activations[np.unravel_index(neuron_index, layer_activations.shape)]
+            for neuron_index, neuron_activation in iterate_over_neuron_activations(layer_activations):
                 layer_neuron_activations.append((neuron_index, neuron_activation))
             neuron_activations.extend(
                 map(lambda x: layer_name + '_' + str(x[0]),
