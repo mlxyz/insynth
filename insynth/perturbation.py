@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import random
 
 import numpy as np
 
@@ -38,8 +39,13 @@ class BlackboxTextPerturbator(AbstractBlackboxPerturbator):
     def __init__(self, p=0.5):
         super().__init__(p)
 
-    @abstractmethod
     def apply(self, original_input):
+        if random.random() > self.p:
+            return original_input
+        return self._internal_apply(original_input)
+
+    @abstractmethod
+    def _internal_apply(self, original_input):
         pass
 
 
