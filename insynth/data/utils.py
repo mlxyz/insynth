@@ -1,14 +1,15 @@
-from io import BytesIO
-from os import path, mkdir
-from zipfile import ZipFile
+import os
 import urllib
+from io import BytesIO
+from os import path
+from zipfile import ZipFile
 
 from tqdm import tqdm
 
 
 def download_and_unzip(url, extract_to):
     if not path.exists(extract_to):
-        mkdir(extract_to)
+        os.makedirs(extract_to, exist_ok=True)
         response = getattr(urllib, 'request', urllib).urlopen(url)
         bytesio_file = BytesIO()
         with tqdm.wrapattr(bytesio_file, "write",
