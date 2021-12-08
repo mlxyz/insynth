@@ -129,14 +129,14 @@ class AudioShortNoisePerturbator(BlackboxAudioPerturbator):
     def __init__(self, p=0.5, noise_types=[]) -> None:
         super().__init__()
         utils.download_and_unzip(
-            'https://github.com/karoldvl/ESC-50/archive/master.zip',
+            'https://insynth-data.s3.eu-central-1.amazonaws.com/background_noise.zip',
             'data/audio/background_noise/')
         self.p = p
         self.noise_types = noise_types
         self.sound_file_paths = []
         for type in noise_types:
             self.sound_file_paths.extend(get_file_paths(
-                f'data/audio/background_noise/{type}', filename_endings='wav'))
+                f'data/audio/background_noise/{type}'))
         self.sound_file_paths = [str(p) for p in self.sound_file_paths]
 
     def _internal_apply(self, original_input):
@@ -152,14 +152,14 @@ class AudioBackgroundNoisePerturbator(BlackboxAudioPerturbator):
     def __init__(self, p=0.5, noise_types=[]) -> None:
         super().__init__()
         utils.download_and_unzip(
-            'https://github.com/karoldvl/ESC-50/archive/master.zip',
+            'https://insynth-data.s3.eu-central-1.amazonaws.com/background_noise.zip',
             'data/audio/background_noise/')
         self.p = p
         self.noise_types = noise_types
         self.sound_file_paths = []
         for type in noise_types:
             self.sound_file_paths.extend(get_file_paths(
-                f'data/audio/background_noise/{type}', filename_endings='wav'))
+                f'data/audio/background_noise/{type}'))
         self.sound_file_paths = [str(p) for p in self.sound_file_paths]
 
     def _internal_apply(self, original_input):
@@ -175,7 +175,7 @@ class AudioImpulseResponsePerturbator(BlackboxAudioPerturbator):
 
     def __init__(self, p=0.5, impulse_types=[]) -> None:
         utils.download_and_unzip(
-            'http://www.echothief.com/wp-content/uploads/2016/06/EchoThiefImpulseResponseLibrary.zip',
+            'https://insynth-data.s3.eu-central-1.amazonaws.com/impulse_response.zip',
             'data/audio/pulse_response/')
         super().__init__()
         self.p = p
@@ -183,7 +183,7 @@ class AudioImpulseResponsePerturbator(BlackboxAudioPerturbator):
         self.ir_files = []
         for type in impulse_types:
             self.ir_files.extend(get_file_paths(
-                f'data/audio/pulse_response/{type}',  filename_endings='wav'))
+                f'data/audio/pulse_response/{type}'))
         self.ir_files = [str(p) for p in self.ir_files]
 
     def _internal_apply(self, original_input):

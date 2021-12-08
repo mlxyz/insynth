@@ -3,6 +3,7 @@ import re
 
 from scipy.stats import norm
 
+from insynth.data import utils
 from insynth.perturbation import BlackboxTextPerturbator
 
 STOP_WORDS = ['i', 'me', 'and', 'an']
@@ -14,8 +15,10 @@ class TextTypoPerturbator(BlackboxTextPerturbator):
         super().__init__(p)
         self.typo_prob = typo_prob
         self.typo_prob_args = typo_prob_args
-
-        with open('data/text/misspellings.dat') as f:
+        utils.download_and_unzip(
+            'https://insynth-data.s3.eu-central-1.amazonaws.com/misspellings.zip',
+            'data/text/misspellings/')
+        with open('data/text/misspellings/misspellings.dat') as f:
             self.misspell_map = {}
             correct_word = None
             for line in f.read().splitlines():
