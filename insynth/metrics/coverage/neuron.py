@@ -44,7 +44,7 @@ def get_random_uncovered_neuron(coverage_dict):
     if uncovered_neurons:
         return random.choice(uncovered_neurons)
     else:
-        return random.choice(coverage_dict.keys())
+        return random.choice(list(coverage_dict.keys()))
 
 
 def iterate_over_layer_activations(model, layers, input_data):
