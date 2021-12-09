@@ -4,7 +4,8 @@ import numpy as np
 from tensorflow import keras
 
 from insynth.metrics.coverage.neuron import NeuronCoverageCalculator, StrongNeuronActivationCoverageCalculator, \
-    KMultiSectionNeuronCoverageCalculator, NeuronBoundaryCoverageCalculator, TopKNeuronCoverageCalculator
+    KMultiSectionNeuronCoverageCalculator, NeuronBoundaryCoverageCalculator, TopKNeuronCoverageCalculator, \
+    TopKNeuronPatternsCalculator
 
 
 class TestNeuronCoverageCalculator(unittest.TestCase):
@@ -148,6 +149,17 @@ class TestNeuronCoverageCalculator(unittest.TestCase):
         coverage['top_k_neurons'] = 5
         coverage['top_k_neurons_covered'] = 1
 
+    def test_TopKNeuronPatternsCalculator(self):
+        model = self._generate_simple_feedforward_model()
+        calc = TopKNeuronPatternsCalculator(model, k=1)
+
+        calc.update_coverage(np.array([[1, 0]]))
+        coverage = calc.get_coverage()
+        assert coverage['total_patterns'] == 1
+
+        calc.update_coverage(np.array([[0, 1]]))
+        coverage = calc.get_coverage()
+        assert coverage['total_patterns'] == 2
 
 if __name__ == '__main__':
     for _ in range(10):
