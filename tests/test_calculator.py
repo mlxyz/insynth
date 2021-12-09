@@ -42,7 +42,7 @@ class TestNeuronCoverageCalculator(unittest.TestCase):
         assert coverage['total_neurons'] == 5
         assert coverage['covered_neurons'] == 3
         assert coverage['covered_neurons_percentage'] == 3 / 5
-        assert (uncovered_neuron == ('dense_2', 0)) or (uncovered_neuron == ('dense_1', 1))
+        assert (uncovered_neuron == ('dense_2', 0)) or (uncovered_neuron == ('dense', 1))
 
         calc.update_coverage(np.array([[1, 0]]))
         coverage = calc.get_coverage()
