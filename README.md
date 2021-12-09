@@ -9,6 +9,7 @@
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=mlxyz_insynth&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=mlxyz_insynth)
 [![codecov](https://codecov.io/gh/mlxyz/insynth/branch/master/graph/badge.svg?token=UCHS79CXM7)](https://codecov.io/gh/mlxyz/insynth)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fmlxyz%2Finsynth.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fmlxyz%2Finsynth?ref=badge_shield)
+[![Documentation Status](https://readthedocs.org/projects/insynth/badge/?version=latest)](https://insynth.readthedocs.io/en/latest/?badge=latest)
 
 # Testing Audio Perturbators
 ```python
