@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from tensorflow import keras
 
-from insynth.metrics.coverage.neuron import NeuronCoverageCalculator
+from insynth.metrics.coverage.neuron import NeuronCoverageCalculator, StrongNeuronActivationCoverageCalculator
 
 
 class TestNeuronCoverageCalculator(unittest.TestCase):
@@ -57,3 +57,29 @@ class TestNeuronCoverageCalculator(unittest.TestCase):
         assert coverage['total_neurons'] == 5
         assert coverage['covered_neurons'] == 5
         assert uncovered_neuron is not None
+
+    def test_StrongNeuronActivationCoverageCalculator(self):
+        model = self._generate_simple_feedforward_model()
+        calc = StrongNeuronActivationCoverageCalculator(model)
+        calc.update_neuron_bounds([np.array([[0, 1]])])
+
+        calc.update_coverage(np.array([[1, 0]]))
+        coverage = calc.get_coverage()
+        uncovered_neuron = calc.get_random_uncovered_neuron()
+        assert coverage['total_neurons'] == 5
+        assert coverage['covered_neurons'] == 1
+        assert uncovered_neuron != ('dense', 1)
+
+        calc.update_coverage(np.array([[1, 1]]))
+        coverage = calc.get_coverage()
+        uncovered_neuron = calc.get_random_uncovered_neuron()
+        assert coverage['total_neurons'] == 5
+        assert coverage['covered_neurons'] == 4
+        assert uncovered_neuron is not None
+
+    def test_KMultiSectionNeuronCoverageCalculator(self):
+        pass
+
+
+if __name__ == '__main__':
+    unittest.main()
