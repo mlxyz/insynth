@@ -1,11 +1,11 @@
 import io
 import random
 
+import numpy as np
+from PIL import Image, ImageEnhance, ImageDraw, ImageOps
 from scipy.stats import norm
 
 from insynth.perturbation import BlackboxImagePerturbator, GenericDeepXplorePerturbator, WhiteboxImagePerturbator
-from PIL import Image, ImageEnhance, ImageDraw, ImageOps
-import numpy as np
 
 
 class ImageNoisePerturbator(BlackboxImagePerturbator):
@@ -156,6 +156,7 @@ class DeepXploreImagePerturbator(GenericDeepXplorePerturbator, WhiteboxImagePert
 
     @staticmethod
     def constraint_occl(gradients, start_point, rect_shape):
+        # only allow occluding a small rectangle in the image
         new_grads = np.zeros_like(gradients)
         new_grads[:, start_point[0]:start_point[0] + rect_shape[0],
         start_point[1]:start_point[1] + rect_shape[1]] = gradients[:, start_point[0]:start_point[0] + rect_shape[0],
@@ -164,6 +165,7 @@ class DeepXploreImagePerturbator(GenericDeepXplorePerturbator, WhiteboxImagePert
 
     @staticmethod
     def constraint_light(gradients):
+        # allow only changes by the same amount to all pixels
         new_grads = np.ones_like(gradients)
         grad_mean = np.mean(gradients)
         return grad_mean * new_grads

@@ -2,10 +2,13 @@ import unittest
 
 import numpy as np
 from PIL import Image
+from tensorflow import keras
 
+from insynth.data import utils
+from insynth.metrics.coverage.neuron import NeuronCoverageCalculator
 from insynth.perturbators.image import ImageNoisePerturbator, ImageBrightnessPerturbator, ImageSharpnessPerturbator, \
     ImageContrastPerturbator, ImageFlipPerturbator, ImageOcclusionPerturbator, ImageCompressionPerturbator, \
-    ImagePixelizePerturbator
+    ImagePixelizePerturbator, DeepXploreImagePerturbator
 
 
 class TestImage(unittest.TestCase):
@@ -194,6 +197,28 @@ class TestImage(unittest.TestCase):
         output_image = perturbator.apply(input_image)
         # check if array was flipped horizontally
         np.testing.assert_array_equal(output_image, np.flip(input_image, axis=1))
+
+    def test_DeepXploreImagePerturbator(self):
+        utils.download_and_unzip('https://insynth-data.s3.eu-central-1.amazonaws.com/imagenette.zip', 'data/imagenet/')
+        model1 = keras.applications.MobileNetV2(alpha=0.35, input_shape=(96, 96, 3), include_top=False)
+        model2 = keras.applications.MobileNetV2(alpha=0.75, input_shape=(96, 96, 3), include_top=False)
+        model3 = keras.applications.MobileNetV2(alpha=1.0, input_shape=(96, 96, 3), include_top=False)
+        orig_calc = NeuronCoverageCalculator(model1)
+        mut_calc = NeuronCoverageCalculator(model1)
+        dataset = keras.utils.image_dataset_from_directory('data/imagenet/', labels=None, batch_size=10000,
+                                                           image_size=(96, 96))
+        dataset = list(dataset.as_numpy_iterator())[-10:]
+        perturbator = DeepXploreImagePerturbator(model1, model2, model3, 'NC')
+
+
+        for image in dataset:
+            orig_calc.update_coverage(image)
+            output = perturbator.apply(image, force_mutation=True)
+            mut_calc.update_coverage(output)
+
+        orig_coverage = mut_calc.get_coverage()
+        mut_coverage = mut_calc.get_coverage()
+        pass
 
 
 if __name__ == '__main__':

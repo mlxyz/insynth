@@ -104,6 +104,7 @@ class GenericDeepXplorePerturbator(AbstractWhiteboxPerturbator):
 
     def __init__(self, model1, model2, model3, coverage_criteria, snac_data=None):
         super().__init__(model1)
+        self.ALPHA = 0.01
         self.model1 = model1
         self.model2 = model2
         self.model3 = model3
@@ -124,7 +125,8 @@ class GenericDeepXplorePerturbator(AbstractWhiteboxPerturbator):
     def apply(self, original_input, force_mutation=False):
         from tensorflow import keras
         import tensorflow as tf
-        gen_img = original_input
+        gen_img = original_input.copy()
+
         label1, label2, label3 = np.argmax(self.model1.predict(gen_img)[0]), np.argmax(
             self.model2.predict(gen_img)[0]), np.argmax(
             self.model3.predict(gen_img)[0])
@@ -135,6 +137,7 @@ class GenericDeepXplorePerturbator(AbstractWhiteboxPerturbator):
 
         if not force_mutation and not label1 == label2 == label3:
             return gen_img
+        # label is the same for every model
         orig_label = label1
 
         # we run gradient ascent for 20 steps
@@ -183,7 +186,7 @@ class GenericDeepXplorePerturbator(AbstractWhiteboxPerturbator):
 
             grads_value = self.apply_gradient_constraint(grads)  # constraint the gradients value
 
-            gen_img += grads_value * 0.01
+            gen_img += grads_value * self.ALPHA
             predictions1 = np.argmax(self.model1.predict(gen_img)[0])
             predictions2 = np.argmax(self.model2.predict(gen_img)[0])
             predictions3 = np.argmax(self.model3.predict(gen_img)[0])
@@ -198,6 +201,7 @@ class GenericDeepXplorePerturbator(AbstractWhiteboxPerturbator):
 
     @staticmethod
     def normalize(x):
+        import tensorflow as tf
         # utility function to normalize a tensor by its L2 norm
         return x / (tf.math.sqrt(tf.math.reduce_mean(tf.math.square(x))) + 1e-5)
 
