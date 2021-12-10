@@ -1,4 +1,5 @@
 import unittest
+from unittest import skip
 
 import numpy as np
 from PIL import Image
@@ -198,6 +199,7 @@ class TestImage(unittest.TestCase):
         # check if array was flipped horizontally
         np.testing.assert_array_equal(output_image, np.flip(input_image, axis=1))
 
+    @skip
     def test_DeepXploreImagePerturbator(self):
         utils.download_and_unzip('https://insynth-data.s3.eu-central-1.amazonaws.com/imagenette.zip', 'data/imagenet/')
         model1 = keras.applications.MobileNetV2(alpha=0.35, input_shape=(96, 96, 3), include_top=False)
