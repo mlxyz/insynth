@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
+import pandas as pd
 from PIL import Image
 from sklearn.metrics import classification_report
 
@@ -20,28 +21,31 @@ class BasicRunner(AbstractRunner):
         self.dataset_y = dataset_y
         self.model = model
 
-    def run(self):
-        
+    def run(self, save_images=False):
+        results = {}
         y_pred = np.argmax(self.model.predict(self.dataset_x, verbose=1), axis=1)
-        original_class_report = classification_report(self.dataset_y, y_pred, output_dict=True)
-        mutated_dataset = []
+        self.put_results_into_dict(results, 'original', self.dataset_y, y_pred)
         for index1, perturbator in enumerate(self.perturbators):
+            perturbator_name = type(perturbator).__name__
+            perturbated_dataset = []
             for index2, sample in enumerate(self.dataset_x):
                 new_image = perturbator.apply(Image.fromarray(sample))
-                new_image.save(f'data/images/{index1}_{index2}.jpg', 'JPEG')
-                mutated_dataset.append(np.array(new_image))
+                if save_images:
+                    new_image.save(f'data/images/{perturbator_name}_{index2}.jpg', 'JPEG')
+                perturbated_dataset.append(np.array(new_image))
+            predictions = np.argmax(self.model.predict(np.array(perturbated_dataset), verbose=1), axis=1)
+            self.put_results_into_dict(results, perturbator_name, self.dataset_y, predictions)
+        return pd.DataFrame.from_dict(results, orient='index')
 
-        mutated_dataset = np.array(mutated_dataset)
-        combined_dataset = mutated_dataset  # np.concatenate((self.dataset_x, mutated_dataset))
-        predictions = self.model.predict(combined_dataset, verbose=1)
-        y_pred = np.argmax(predictions, axis=1)
-        mutated_class_report = classification_report(np.tile(self.dataset_y, len(self.perturbators)),
-                                                     y_pred,
-                                                     output_dict=True)
-        print('ORIGINAL')
-        print(original_class_report)
-
-        print()
-
-        print('MUTATED')
-        print(mutated_class_report)
+    def put_results_into_dict(self, dct, name, y_true, y_pred):
+        results = classification_report(y_true,
+                                        y_pred,
+                                        output_dict=True)
+        dct[name] = {
+            'acc': results['accuracy'],
+            'macro_f1': results['macro avg']['f1-score'],
+            'macro_rec': results['macro avg']['recall'],
+            'macro_prec': results['macro avg']['precision'],
+            'micro_f1': results['weighted avg']['f1-score'],
+            'micro_rec': results['weighted avg']['recall'],
+            'micro_prec': results['weighted avg']['precision']}
