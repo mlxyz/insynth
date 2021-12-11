@@ -8,7 +8,7 @@ from audiomentations.core.utils import get_file_paths
 from scipy.stats import norm
 
 from insynth.data import utils
-from insynth.perturbation import BlackboxAudioPerturbator, GenericDeepXplorePerturbator, WhiteboxAudioPerturbator
+from insynth.perturbation import BlackboxAudioPerturbator, WhiteboxAudioPerturbator
 
 
 class AudioBackgroundWhiteNoisePerturbator(BlackboxAudioPerturbator):
@@ -28,10 +28,6 @@ class AudioBackgroundWhiteNoisePerturbator(BlackboxAudioPerturbator):
         signal_noise = signal + noise
         return signal_noise
 
-
-class DeepXploreAudioPerturbator(GenericDeepXplorePerturbator, WhiteboxAudioPerturbator):
-    def apply_gradient_constraint(self, grads):
-        return grads
 
 
 class AudioCompressionPerturbator(BlackboxAudioPerturbator):
