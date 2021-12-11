@@ -5,7 +5,7 @@ import numpy as np
 from PIL import Image, ImageEnhance, ImageDraw, ImageOps
 from scipy.stats import norm
 
-from insynth.perturbation import BlackboxImagePerturbator, GenericDeepXplorePerturbator, WhiteboxImagePerturbator
+from insynth.perturbation import BlackboxImagePerturbator, WhiteboxImagePerturbator
 
 
 class ImageNoisePerturbator(BlackboxImagePerturbator):
