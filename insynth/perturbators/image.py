@@ -20,7 +20,7 @@ class ImageNoisePerturbator(BlackboxImagePerturbator):
         with original_input as img:
             image = np.array(img)
             salt_pepper_ratio = 0.5
-            amount = self.noise_prob.rvs(**self.noise_prob_args)
+            amount = max(self.noise_prob.rvs(**self.noise_prob_args), 0.0)
             output_image_arr = np.copy(image)
             # Salt
             num_salt = np.ceil(amount * image.size * salt_pepper_ratio)
@@ -109,8 +109,8 @@ class ImageOcclusionPerturbator(BlackboxImagePerturbator):
             for _ in range(number_occlusions):
                 occlusion_width = int(self.width_prob.rvs(**self.width_prob_args))
                 occlusion_height = int(self.height_prob.rvs(**self.height_prob_args))
-                start_x = random.randint(0, image_width - occlusion_width)
-                start_y = random.randint(0, image_height - occlusion_height)
+                start_x = random.randint(0, max(image_width - occlusion_width, 0))
+                start_y = random.randint(0, max(image_height - occlusion_height, 0))
                 end_x = start_x + occlusion_width
                 end_y = start_y + occlusion_height
                 draw.rectangle([(start_x, start_y), (end_x, end_y)], fill=self.color)
@@ -130,7 +130,7 @@ class ImageCompressionPerturbator(BlackboxImagePerturbator):
                                       quality=int(100 - self.artifact_prob.rvs(**self.artifact_prob_args) * 100))
         buffer.flush()
         buffer.seek(0)
-        return Image.open(buffer, formats=['JPEG'])
+        return Image.open(buffer, formats=['JPEG']).convert('RGB')
 
 
 class ImagePixelizePerturbator(BlackboxImagePerturbator):

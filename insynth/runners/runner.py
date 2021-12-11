@@ -5,6 +5,13 @@ import pandas as pd
 from PIL import Image
 from sklearn.metrics import classification_report
 
+from insynth.metrics.coverage.neuron import StrongNeuronActivationCoverageCalculator, \
+    KMultiSectionNeuronCoverageCalculator, NeuronCoverageCalculator, NeuronBoundaryCoverageCalculator, \
+    TopKNeuronCoverageCalculator, TopKNeuronPatternsCalculator
+from insynth.perturbators.image import ImageNoisePerturbator, ImageBrightnessPerturbator, ImageContrastPerturbator, \
+    ImageSharpnessPerturbator, ImageFlipPerturbator, ImageOcclusionPerturbator, ImageCompressionPerturbator, \
+    ImagePixelizePerturbator
+
 
 class AbstractRunner(ABC):
     @abstractmethod
@@ -49,3 +56,30 @@ class BasicRunner(AbstractRunner):
             'micro_f1': results['weighted avg']['f1-score'],
             'micro_rec': results['weighted avg']['recall'],
             'micro_prec': results['weighted avg']['precision']}
+
+
+class ComprehensiveRunner(BasicRunner):
+    def __init__(self, dataset_x, dataset_y, model):
+        super().__init__(self._get_all_perturbators(), self._get_all_coverage_calculators(model), dataset_x, dataset_y,
+                         model)
+
+    def _get_all_perturbators(self):
+        return [ImageNoisePerturbator(p=1.0),
+                ImageBrightnessPerturbator(p=1.0),
+                ImageContrastPerturbator(p=1.0),
+                ImageSharpnessPerturbator(p=1.0),
+                ImageFlipPerturbator(p=1.0),
+                ImageOcclusionPerturbator(p=1.0),
+                ImageCompressionPerturbator(p=1.0),
+                ImagePixelizePerturbator(p=1.0)
+                ]
+
+    def _get_all_coverage_calculators(self, model):
+        return [
+            NeuronCoverageCalculator(model),
+            StrongNeuronActivationCoverageCalculator(model),
+            KMultiSectionNeuronCoverageCalculator(model),
+            NeuronBoundaryCoverageCalculator(model),
+            TopKNeuronCoverageCalculator(model),
+            TopKNeuronPatternsCalculator(model),
+        ]

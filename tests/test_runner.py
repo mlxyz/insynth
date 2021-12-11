@@ -5,8 +5,9 @@ from tensorflow import keras
 from tensorflow.keras import layers
 
 from insynth.metrics.coverage.neuron import NeuronCoverageCalculator
-from insynth.perturbators.image import ImageBrightnessPerturbator, ImageContrastPerturbator, ImageOcclusionPerturbator
-from insynth.runners.runner import BasicRunner
+from insynth.perturbators.image import ImageBrightnessPerturbator, ImageContrastPerturbator, ImageOcclusionPerturbator, \
+    ImageCompressionPerturbator
+from insynth.runners.runner import BasicRunner, ComprehensiveRunner
 
 
 class TestRunner(unittest.TestCase):
@@ -35,8 +36,9 @@ class TestRunner(unittest.TestCase):
 
         model.summary()
         batch_size = 32
-        epochs = 2
+        epochs = 15
         model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
+        # dont fit the model for CI/CD
         # model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, validation_split=0.1)
 
         return model
@@ -52,5 +54,18 @@ class TestRunner(unittest.TestCase):
             [NeuronCoverageCalculator(model)], x_test[-1000:], y_test[-1000:],
             model)
         report = runner.run(save_images=False)
+        assert len(report.columns) == 7
+        assert report.isna().sum().sum() == 0
+
+    def test_ComprehensiveRunner(self):
+        (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
+        model = self._generate_mnist_model()
+        runner = ComprehensiveRunner(
+            x_test[-1000:], y_test[-1000:],
+            model)
+        runner.perturbators = [perturbator for perturbator in runner.perturbators if
+                               not isinstance(perturbator, ImageCompressionPerturbator)]
+        report = runner.run(save_images=False)
+        print(report)
         assert len(report.columns) == 7
         assert report.isna().sum().sum() == 0
