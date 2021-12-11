@@ -10,7 +10,7 @@ from insynth.data import utils
 from insynth.metrics.coverage.neuron import NeuronCoverageCalculator
 from insynth.perturbators.image import ImageNoisePerturbator, ImageBrightnessPerturbator, ImageSharpnessPerturbator, \
     ImageContrastPerturbator, ImageFlipPerturbator, ImageOcclusionPerturbator, ImageCompressionPerturbator, \
-    ImagePixelizePerturbator, DeepXploreImagePerturbator
+    ImagePixelizePerturbator
 
 
 class TestImage(unittest.TestCase):
