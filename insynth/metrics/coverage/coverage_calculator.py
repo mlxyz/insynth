@@ -7,8 +7,8 @@ class AbstractCoverageCalculator(ABC):
 
     @abstractmethod
     def update_coverage(self, input_data) -> dict:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def get_random_uncovered_neuron(self):
-        pass
+        raise NotImplementedError

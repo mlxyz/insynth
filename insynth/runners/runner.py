@@ -9,7 +9,7 @@ from sklearn.metrics import classification_report
 class AbstractRunner(ABC):
     @abstractmethod
     def run(self):
-        pass
+        raise NotImplementedError
 
 
 class BasicRunner(AbstractRunner):

@@ -19,7 +19,7 @@ class AbstractBlackboxPerturbator(ABC):
 
     @abstractmethod
     def _internal_apply(self, original_input):
-        pass
+        raise NotImplementedError
 
 
 class BlackboxImagePerturbator(AbstractBlackboxPerturbator):
@@ -28,7 +28,7 @@ class BlackboxImagePerturbator(AbstractBlackboxPerturbator):
 
     @abstractmethod
     def _internal_apply(self, original_input):
-        pass
+        raise NotImplementedError
 
 
 class BlackboxAudioPerturbator(AbstractBlackboxPerturbator):
@@ -42,7 +42,7 @@ class BlackboxAudioPerturbator(AbstractBlackboxPerturbator):
 
     @abstractmethod
     def _internal_apply(self, original_input):
-        pass
+        raise NotImplementedError
 
 
 class BlackboxTextPerturbator(AbstractBlackboxPerturbator):
@@ -51,7 +51,7 @@ class BlackboxTextPerturbator(AbstractBlackboxPerturbator):
 
     @abstractmethod
     def _internal_apply(self, original_input):
-        pass
+        raise NotImplementedError
 
 
 class AbstractWhiteboxPerturbator(ABC):
@@ -60,7 +60,7 @@ class AbstractWhiteboxPerturbator(ABC):
 
     @abstractmethod
     def apply(self, original_input):
-        pass
+        raise NotImplementedError
 
 
 class WhiteboxImagePerturbator(AbstractWhiteboxPerturbator):
@@ -69,7 +69,7 @@ class WhiteboxImagePerturbator(AbstractWhiteboxPerturbator):
 
     @abstractmethod
     def apply(self, original_input):
-        pass
+        raise NotImplementedError
 
 
 class WhiteboxAudioPerturbator(AbstractWhiteboxPerturbator):
@@ -78,7 +78,7 @@ class WhiteboxAudioPerturbator(AbstractWhiteboxPerturbator):
 
     @abstractmethod
     def apply(self, original_input):
-        pass
+        raise NotImplementedError
 
 
 class WhiteboxTextPerturbator(AbstractWhiteboxPerturbator):
@@ -87,7 +87,7 @@ class WhiteboxTextPerturbator(AbstractWhiteboxPerturbator):
 
     @abstractmethod
     def apply(self, original_input):
-        pass
+        raise NotImplementedError
 
 
 COVERAGE_CRITERIA_TO_CALCULATOR_CLASS = {
@@ -207,4 +207,4 @@ class GenericDeepXplorePerturbator(AbstractWhiteboxPerturbator):
 
     @abstractmethod
     def apply_gradient_constraint(self, grads):
-        pass
+        raise NotImplementedError

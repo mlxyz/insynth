@@ -319,7 +319,7 @@ class TopKNeuronCoverageCalculator(AbstractCoverageCalculator):
 
 class TopKNeuronPatternsCalculator(AbstractCoverageCalculator):
     def get_random_uncovered_neuron(self):
-        pass
+        raise NotImplementedError
 
     def __init__(self, model, k=3):
         super().__init__(model)
