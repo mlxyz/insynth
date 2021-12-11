@@ -3,6 +3,7 @@ from unittest import skip
 
 import numpy as np
 from PIL import Image
+from keras import layers
 from tensorflow import keras
 
 from insynth.data import utils
@@ -13,6 +14,38 @@ from insynth.perturbators.image import ImageNoisePerturbator, ImageBrightnessPer
 
 
 class TestImage(unittest.TestCase):
+
+    def _generate_mnist_model(self):
+        num_classes = 10
+        input_shape = (28, 28, 1)
+        (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
+        x_train = x_train.astype("float32") / 255
+        x_test = x_test.astype("float32") / 255
+        x_train = np.expand_dims(x_train, -1)
+
+        y_train = keras.utils.to_categorical(y_train, num_classes)
+
+        model = keras.Sequential(
+            [
+                keras.Input(shape=input_shape),
+                layers.Conv2D(32, kernel_size=(3, 3), activation="relu"),
+                layers.MaxPooling2D(pool_size=(2, 2)),
+                layers.Conv2D(64, kernel_size=(3, 3), activation="relu"),
+                layers.MaxPooling2D(pool_size=(2, 2)),
+                layers.Flatten(),
+                layers.Dropout(0.5),
+                layers.Dense(num_classes, activation="softmax"),
+            ]
+        )
+
+        model.summary()
+        batch_size = 32
+        epochs = 15
+        model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
+        # dont fit the model for CI/CD
+        # model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, validation_split=0.1)
+
+        return model
 
     def _generate_random_image(self):
         imarray = np.random.rand(100, 100, 3) * 255
@@ -198,29 +231,6 @@ class TestImage(unittest.TestCase):
         output_image = perturbator.apply(input_image)
         # check if array was flipped horizontally
         np.testing.assert_array_equal(output_image, np.flip(input_image, axis=1))
-
-    @skip
-    def test_DeepXploreImagePerturbator(self):
-        utils.download_and_unzip('https://insynth-data.s3.eu-central-1.amazonaws.com/imagenette.zip', 'data/imagenet/')
-        model1 = keras.applications.MobileNetV2(alpha=0.35, input_shape=(96, 96, 3), include_top=False)
-        model2 = keras.applications.MobileNetV2(alpha=0.75, input_shape=(96, 96, 3), include_top=False)
-        model3 = keras.applications.MobileNetV2(alpha=1.0, input_shape=(96, 96, 3), include_top=False)
-        orig_calc = NeuronCoverageCalculator(model1)
-        mut_calc = NeuronCoverageCalculator(model1)
-        dataset = keras.utils.image_dataset_from_directory('data/imagenet/', labels=None, batch_size=10000,
-                                                           image_size=(96, 96))
-        dataset = list(dataset.as_numpy_iterator())[-10:]
-        perturbator = DeepXploreImagePerturbator(model1, model2, model3, 'NC')
-
-
-        for image in dataset:
-            orig_calc.update_coverage(image)
-            output = perturbator.apply(image, force_mutation=True)
-            mut_calc.update_coverage(output)
-
-        orig_coverage = mut_calc.get_coverage()
-        mut_coverage = mut_calc.get_coverage()
-        pass
 
 
 if __name__ == '__main__':
