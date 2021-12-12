@@ -43,7 +43,7 @@ class TestRunner(unittest.TestCase):
 
         return model
 
-    def test_BasicRunner(self):
+    def test_BasicImageRunner(self):
         (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
         model = self._generate_mnist_model()
         runner = BasicImageRunner(
@@ -57,12 +57,13 @@ class TestRunner(unittest.TestCase):
         assert len(report.columns) == 7
         assert report.isna().sum().sum() == 0
 
-    def test_ComprehensiveRunner(self):
+    def test_ComprehensiveImageRunner(self):
         (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
         model = self._generate_mnist_model()
         runner = ComprehensiveImageRunner(
             x_test[-1000:], y_test[-1000:],
             model)
+        # filter out compression perturbator as it generates colored images which cannot be processed by this model
         runner.perturbators = [perturbator for perturbator in runner.perturbators if
                                not isinstance(perturbator, ImageCompressionPerturbator)]
         report = runner.run(save_images=False)
