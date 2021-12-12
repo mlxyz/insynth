@@ -28,18 +28,18 @@ class BasicRunner(AbstractRunner):
         self.dataset_y = dataset_y
         self.model = model
 
-    def run(self, save_images=False):
+    def run(self, save_images=False, output_path=None):
         results = {}
         y_pred = np.argmax(self.model.predict(self.dataset_x, verbose=1), axis=1)
         self.put_results_into_dict(results, 'original', self.dataset_y, y_pred)
-        for index1, perturbator in enumerate(self.perturbators):
+        for perturbator_index, perturbator in enumerate(self.perturbators):
             perturbator_name = type(perturbator).__name__
             perturbated_dataset = []
-            for index2, sample in enumerate(self.dataset_x):
-                new_image = perturbator.apply(Image.fromarray(sample))
+            for sample_index, sample in enumerate(self.dataset_x):
+                mutated_sample = self._apply_perturbator(sample, perturbator)
                 if save_images:
-                    new_image.save(f'data/images/{perturbator_name}_{index2}.jpg', 'JPEG')
-                perturbated_dataset.append(np.array(new_image))
+                    self._save(mutated_sample, f'{output_path}/{perturbator_name}_{sample_index}')
+                perturbated_dataset.append(np.array(mutated_sample))
             predictions = np.argmax(self.model.predict(np.array(perturbated_dataset), verbose=1), axis=1)
             self.put_results_into_dict(results, perturbator_name, self.dataset_y, predictions)
         return pd.DataFrame.from_dict(results, orient='index')
@@ -57,8 +57,24 @@ class BasicRunner(AbstractRunner):
             'micro_rec': results['weighted avg']['recall'],
             'micro_prec': results['weighted avg']['precision']}
 
+    @abstractmethod
+    def _apply_perturbator(self, sample, perturbator):
+        raise NotImplementedError()
 
-class ComprehensiveRunner(BasicRunner):
+    @abstractmethod
+    def _save(self, sample, output_path):
+        raise NotImplementedError()
+
+
+class BasicImageRunner(BasicRunner):
+    def _apply_perturbator(self, sample, perturbator):
+        return perturbator.apply(Image.fromarray(sample))
+
+    def _save(self, sample, output_path):
+        sample.save(output_path + '.jpg', 'JPEG')
+
+
+class ComprehensiveImageRunner(BasicImageRunner):
     def __init__(self, dataset_x, dataset_y, model):
         super().__init__(self._get_all_perturbators(), self._get_all_coverage_calculators(model), dataset_x, dataset_y,
                          model)

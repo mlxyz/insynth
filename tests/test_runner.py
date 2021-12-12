@@ -7,7 +7,7 @@ from tensorflow.keras import layers
 from insynth.metrics.coverage.neuron import NeuronCoverageCalculator
 from insynth.perturbators.image import ImageBrightnessPerturbator, ImageContrastPerturbator, ImageOcclusionPerturbator, \
     ImageCompressionPerturbator
-from insynth.runners.runner import BasicRunner, ComprehensiveRunner
+from insynth.runners.runner import ComprehensiveImageRunner, BasicImageRunner
 
 
 class TestRunner(unittest.TestCase):
@@ -46,7 +46,7 @@ class TestRunner(unittest.TestCase):
     def test_BasicRunner(self):
         (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
         model = self._generate_mnist_model()
-        runner = BasicRunner(
+        runner = BasicImageRunner(
             [ImageBrightnessPerturbator(p=1.0), ImageContrastPerturbator(p=1.0),
              ImageOcclusionPerturbator(p=1.0, width_prob_args={'loc': 2, 'scale': 2},
                                        height_prob_args={'loc': 2, 'scale': 2},
@@ -60,7 +60,7 @@ class TestRunner(unittest.TestCase):
     def test_ComprehensiveRunner(self):
         (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
         model = self._generate_mnist_model()
-        runner = ComprehensiveRunner(
+        runner = ComprehensiveImageRunner(
             x_test[-1000:], y_test[-1000:],
             model)
         runner.perturbators = [perturbator for perturbator in runner.perturbators if
