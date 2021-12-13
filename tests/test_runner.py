@@ -3,6 +3,7 @@ import unittest
 import librosa
 import numpy as np
 import tensorflow as tf
+from keras.losses import BinaryCrossentropy
 from sklearn.preprocessing import LabelEncoder
 from tensorflow import keras
 from tensorflow.keras import layers
@@ -11,7 +12,8 @@ from insynth.data import utils
 from insynth.metrics.coverage.neuron import NeuronCoverageCalculator
 from insynth.perturbators.image import ImageBrightnessPerturbator, ImageContrastPerturbator, ImageOcclusionPerturbator, \
     ImageCompressionPerturbator
-from insynth.runners.runner import ComprehensiveImageRunner, BasicImageRunner, ComprehensiveAudioRunner
+from insynth.runners.runner import ComprehensiveImageRunner, BasicImageRunner, ComprehensiveAudioRunner, \
+    ComprehensiveTextRunner
 import os
 
 
@@ -83,6 +85,18 @@ class TestRunner(unittest.TestCase):
         # model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, validation_split=0.1)
 
         return model
+    def _build_sentiment_model(self):
+        model = tf.keras.Sequential([
+            layers.Embedding(10000 + 1, 16),
+            layers.Dropout(0.2),
+            layers.GlobalAveragePooling1D(),
+            layers.Dropout(0.2),
+            layers.Dense(1)])
+
+        model.compile(loss=BinaryCrossentropy(from_logits=True),
+                      optimizer='adam',
+                      metrics=tf.metrics.BinaryAccuracy(threshold=0.0))
+        return model
 
     def test_BasicImageRunner(self):
         (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
@@ -127,8 +141,27 @@ class TestRunner(unittest.TestCase):
         model = self._build_audio_model()
         runner = ComprehensiveAudioRunner(
             x_test[-1000:], y_test[-1000:],
-            model, True)
+            model)
 
+        report = runner.run(save_mutated_samples=False)
+        print(report)
+        assert len(report.columns) == 7
+        assert report.isna().sum().sum() == 0
+
+    def test_ComprehrensiveTextRunner(self):
+        utils.download_and_unzip('https://insynth-data.s3.eu-central-1.amazonaws.com/sentiment_classification.zip',
+                                 'data/sentiment_classification/')
+        x_test = []
+        y_test = []
+        for root_dir, directories, files in os.walk('data/sentiment_classification/'):
+            if not files:
+                continue
+            for file in files:
+                x_test.append(open(os.path.join(root_dir, file), 'r').read())
+                y_test.append(root_dir)
+        y_test = LabelEncoder().fit_transform(y_test)
+        model = self._build_sentiment_model()
+        runner = ComprehensiveTextRunner(x_test, y_test, model)
         report = runner.run(save_mutated_samples=False)
         print(report)
         assert len(report.columns) == 7

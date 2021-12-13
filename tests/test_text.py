@@ -1,5 +1,6 @@
 import unittest
 
+from insynth.data import utils
 from insynth.perturbators.text import TextTypoPerturbator, TextCasePerturbator, TextWordRemovalPerturbator, \
     TextStopWordRemovalPerturbator, TextWordSwitchPerturbator, TextCharacterSwitchPerturbator, \
     TextPunctuationErrorPerturbator

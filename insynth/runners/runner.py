@@ -1,8 +1,11 @@
+import re
+import string
 from abc import ABC, abstractmethod
 
 import numpy as np
 import pandas as pd
 from PIL import Image
+from keras import layers
 from sklearn.metrics import classification_report
 
 from insynth.metrics.coverage.neuron import StrongNeuronActivationCoverageCalculator, \
@@ -15,6 +18,12 @@ from insynth.perturbators.image import ImageNoisePerturbator, ImageBrightnessPer
     ImageSharpnessPerturbator, ImageFlipPerturbator, ImageOcclusionPerturbator, ImageCompressionPerturbator, \
     ImagePixelizePerturbator
 
+import tensorflow as tf
+
+from insynth.perturbators.text import TextTypoPerturbator, TextCasePerturbator, TextWordRemovalPerturbator, \
+    TextStopWordRemovalPerturbator, TextWordSwitchPerturbator, TextCharacterSwitchPerturbator, \
+    TextPunctuationErrorPerturbator
+
 
 class AbstractRunner(ABC):
     @abstractmethod
@@ -24,13 +33,12 @@ class AbstractRunner(ABC):
 
 class BasicRunner(AbstractRunner):
 
-    def __init__(self, perturbators, coverage_calculators, dataset_x, dataset_y, model, can_batch_predict=True):
+    def __init__(self, perturbators, coverage_calculators, dataset_x, dataset_y, model):
         self.perturbators = perturbators
         self.coverage_calculators = coverage_calculators
         self.dataset_x = dataset_x
         self.dataset_y = dataset_y
         self.model = model
-        self.can_batch_predict = can_batch_predict
 
     def run(self, save_mutated_samples=False, output_path=None):
         results = {}
@@ -86,9 +94,34 @@ class BasicImageRunner(BasicRunner):
         sample.save(output_path + '.jpg', 'JPEG')
 
 
+class BasicTextRunner(BasicRunner):
+    def _apply_perturbator(self, samples, perturbator):
+        return list(map(perturbator.apply, samples))
+
+    def _save(self, sample, output_path):
+        with open(output_path + '.txt', 'w') as txt_out:
+            txt_out.write(sample)
+
+    def custom_standardization(self,input_data):
+        lowercase = tf.strings.lower(input_data)
+        stripped_html = tf.strings.regex_replace(lowercase, '<br />', ' ')
+        return tf.strings.regex_replace(stripped_html,
+                                        '[%s]' % re.escape(string.punctuation),
+                                        '')
+
+    def _pre_prediction(self, samples):
+        vectorize_layer = layers.TextVectorization(
+            standardize=self.custom_standardization,
+            max_tokens=10000,
+            output_mode='int',
+            output_sequence_length=250)
+        vectorize_layer.adapt(samples)
+        return vectorize_layer(samples).numpy()
+
+
 class BasicAudioRunner(BasicRunner):
-    def __init__(self, perturbators, coverage_calculators, dataset_x, dataset_y, model, can_batch_predict=True):
-        super().__init__(perturbators, coverage_calculators, dataset_x, dataset_y, model, can_batch_predict)
+    def __init__(self, perturbators, coverage_calculators, dataset_x, dataset_y, model):
+        super().__init__(perturbators, coverage_calculators, dataset_x, dataset_y, model)
 
     def _apply_perturbator(self, samples, perturbator):
         return [(perturbator.apply(sample), sample[1]) for sample in samples]
@@ -145,9 +178,9 @@ class ComprehensiveImageRunner(BasicImageRunner):
 
 
 class ComprehensiveAudioRunner(BasicAudioRunner):
-    def __init__(self, dataset_x, dataset_y, model, can_batch_predict=True):
+    def __init__(self, dataset_x, dataset_y, model):
         super().__init__(self._get_all_perturbators(), self._get_all_coverage_calculators(model), dataset_x, dataset_y,
-                         model, can_batch_predict)
+                         model)
 
     def _get_all_perturbators(self):
         return [AudioBackgroundWhiteNoisePerturbator(p=1.0),
@@ -170,3 +203,28 @@ class ComprehensiveAudioRunner(BasicAudioRunner):
             TopKNeuronCoverageCalculator(model),
             TopKNeuronPatternsCalculator(model),
         ]
+
+
+class ComprehensiveTextRunner(BasicTextRunner):
+    def __init__(self, dataset_x, dataset_y, model):
+        super().__init__(self._get_all_perturbators(), self._get_all_coverage_calculators(model), dataset_x, dataset_y,
+                         model)
+
+    def _get_all_perturbators(self):
+        return [TextTypoPerturbator(p=1.0),
+                TextCasePerturbator(p=1.0),
+                TextWordRemovalPerturbator(p=1.0),
+                TextStopWordRemovalPerturbator(p=1.0),
+                TextWordSwitchPerturbator(p=1.0),
+                TextCharacterSwitchPerturbator(p=1.0),
+                TextPunctuationErrorPerturbator(p=1.0),
+                ]
+
+    def _get_all_coverage_calculators(self, model):
+        return [
+            NeuronCoverageCalculator(model),
+            StrongNeuronActivationCoverageCalculator(model),
+            KMultiSectionNeuronCoverageCalculator(model),
+            NeuronBoundaryCoverageCalculator(model),
+            TopKNeuronCoverageCalculator(model),
+            TopKNeuronPatternsCalculator(model)]
