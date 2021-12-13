@@ -76,7 +76,7 @@ class AudioClippingPerturbator(BlackboxAudioPerturbator):
         signal, sample_rate = original_input
 
         clipping_percentile = self.clipping_prob.rvs(**self.clipping_prob_args)
-        clipping_percentile = max(min(80, clipping_percentile), 0)
+        clipping_percentile = int(max(min(80, clipping_percentile), 0))
 
         op = ClippingDistortion(
             p=1.0, min_percentile_threshold=clipping_percentile, max_percentile_threshold=clipping_percentile)
@@ -101,7 +101,7 @@ class AudioVolumePerturbator(BlackboxAudioPerturbator):
 
 
 class AudioEchoPerturbator(BlackboxAudioPerturbator):
-    def __init__(self, p=0.5, echo_prob=norm, echo_prob_args={'loc': 1.0, 'scale': 2.0}) -> None:
+    def __init__(self, p=0.5, echo_prob=norm, echo_prob_args={'loc': 0.3, 'scale': 0.1}) -> None:
         super().__init__(p=p)
         self.echo_prob = echo_prob
         self.echo_prob_args = echo_prob_args
@@ -110,7 +110,7 @@ class AudioEchoPerturbator(BlackboxAudioPerturbator):
         signal, sample_rate = original_input
 
         echo_delay = self.echo_prob.rvs(**self.echo_prob_args)
-        echo_delay = max(min(5.0, echo_delay), 0.0)
+        echo_delay = max(min(1.0, echo_delay), 0.0)
 
         output_audio = np.zeros(len(signal))
         output_delay = echo_delay * sample_rate
@@ -122,7 +122,7 @@ class AudioEchoPerturbator(BlackboxAudioPerturbator):
 
 
 class AudioShortNoisePerturbator(BlackboxAudioPerturbator):
-    def __init__(self, p=0.5, noise_types=[]) -> None:
+    def __init__(self, p=0.5, noise_types=['']) -> None:
         super().__init__()
         utils.download_and_unzip(
             'https://insynth-data.s3.eu-central-1.amazonaws.com/background_noise.zip',
@@ -145,7 +145,7 @@ class AudioShortNoisePerturbator(BlackboxAudioPerturbator):
 
 
 class AudioBackgroundNoisePerturbator(BlackboxAudioPerturbator):
-    def __init__(self, p=0.5, noise_types=[]) -> None:
+    def __init__(self, p=0.5, noise_types=['']) -> None:
         super().__init__()
         utils.download_and_unzip(
             'https://insynth-data.s3.eu-central-1.amazonaws.com/background_noise.zip',
@@ -169,7 +169,7 @@ class AudioBackgroundNoisePerturbator(BlackboxAudioPerturbator):
 
 class AudioImpulseResponsePerturbator(BlackboxAudioPerturbator):
 
-    def __init__(self, p=0.5, impulse_types=[]) -> None:
+    def __init__(self, p=0.5, impulse_types=['']) -> None:
         utils.download_and_unzip(
             'https://insynth-data.s3.eu-central-1.amazonaws.com/impulse_response.zip',
             'data/audio/pulse_response/')

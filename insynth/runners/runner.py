@@ -8,6 +8,9 @@ from sklearn.metrics import classification_report
 from insynth.metrics.coverage.neuron import StrongNeuronActivationCoverageCalculator, \
     KMultiSectionNeuronCoverageCalculator, NeuronCoverageCalculator, NeuronBoundaryCoverageCalculator, \
     TopKNeuronCoverageCalculator, TopKNeuronPatternsCalculator
+from insynth.perturbators.audio import AudioBackgroundWhiteNoisePerturbator, AudioCompressionPerturbator, \
+    AudioPitchPerturbator, AudioClippingPerturbator, AudioVolumePerturbator, AudioEchoPerturbator, \
+    AudioShortNoisePerturbator, AudioBackgroundNoisePerturbator, AudioImpulseResponsePerturbator
 from insynth.perturbators.image import ImageNoisePerturbator, ImageBrightnessPerturbator, ImageContrastPerturbator, \
     ImageSharpnessPerturbator, ImageFlipPerturbator, ImageOcclusionPerturbator, ImageCompressionPerturbator, \
     ImagePixelizePerturbator
@@ -21,26 +24,32 @@ class AbstractRunner(ABC):
 
 class BasicRunner(AbstractRunner):
 
-    def __init__(self, perturbators, coverage_calculators, dataset_x, dataset_y, model):
+    def __init__(self, perturbators, coverage_calculators, dataset_x, dataset_y, model, can_batch_predict=True):
         self.perturbators = perturbators
         self.coverage_calculators = coverage_calculators
         self.dataset_x = dataset_x
         self.dataset_y = dataset_y
         self.model = model
+        self.can_batch_predict = can_batch_predict
 
-    def run(self, save_images=False, output_path=None):
+    def run(self, save_mutated_samples=False, output_path=None):
         results = {}
-        y_pred = np.argmax(self.model.predict(self.dataset_x, verbose=1), axis=1)
+        original_dataset = self._pre_prediction(self.dataset_x)
+        y_pred = np.argmax(self.model.predict(original_dataset, verbose=1), axis=1)
+
         self.put_results_into_dict(results, 'original', self.dataset_y, y_pred)
+
         for perturbator_index, perturbator in enumerate(self.perturbators):
             perturbator_name = type(perturbator).__name__
-            perturbated_dataset = []
-            for sample_index, sample in enumerate(self.dataset_x):
-                mutated_sample = self._apply_perturbator(sample, perturbator)
-                if save_images:
+            mutated_samples = self._apply_perturbator(self.dataset_x, perturbator)
+            if save_mutated_samples:
+                for sample_index, mutated_sample in enumerate(mutated_samples):
                     self._save(mutated_sample, f'{output_path}/{perturbator_name}_{sample_index}')
-                perturbated_dataset.append(np.array(mutated_sample))
-            predictions = np.argmax(self.model.predict(np.array(perturbated_dataset), verbose=1), axis=1)
+
+            perturbated_dataset = self._pre_prediction(mutated_samples)
+
+            predictions = np.argmax(self.model.predict(perturbated_dataset, verbose=1), axis=1)
+
             self.put_results_into_dict(results, perturbator_name, self.dataset_y, predictions)
         return pd.DataFrame.from_dict(results, orient='index')
 
@@ -58,20 +67,54 @@ class BasicRunner(AbstractRunner):
             'micro_prec': results['weighted avg']['precision']}
 
     @abstractmethod
-    def _apply_perturbator(self, sample, perturbator):
+    def _apply_perturbator(self, samples, perturbator):
         raise NotImplementedError()
 
     @abstractmethod
     def _save(self, sample, output_path):
         raise NotImplementedError()
 
+    def _pre_prediction(self, samples):
+        return np.array([np.array(sample) for sample in samples])
+
 
 class BasicImageRunner(BasicRunner):
-    def _apply_perturbator(self, sample, perturbator):
-        return perturbator.apply(Image.fromarray(sample))
+    def _apply_perturbator(self, samples, perturbator):
+        return [perturbator.apply(Image.fromarray(sample)) for sample in samples]
 
     def _save(self, sample, output_path):
         sample.save(output_path + '.jpg', 'JPEG')
+
+
+class BasicAudioRunner(BasicRunner):
+    def __init__(self, perturbators, coverage_calculators, dataset_x, dataset_y, model, can_batch_predict=True):
+        super().__init__(perturbators, coverage_calculators, dataset_x, dataset_y, model, can_batch_predict)
+
+    def _apply_perturbator(self, samples, perturbator):
+        return [(perturbator.apply(sample), sample[1]) for sample in samples]
+
+    def _save(self, sample, output_path):
+        from scipy.io.wavfile import write
+        signal, sample_rate = sample
+        write(output_path + '.wav', sample_rate, signal)
+
+    def _pre_prediction(self, samples):
+        import tensorflow as tf
+
+        out = []
+        for sample in samples:
+            signal = np.expand_dims(sample[0], axis=1)
+            sample_rate = sample[1]
+            audio = signal
+            fft = tf.signal.fft(
+                tf.cast(tf.complex(real=audio, imag=tf.zeros_like(audio)), tf.complex64)
+            )
+            # fft = tf.expand_dims(fft, axis=0)
+
+            # Return the absolute value of the first half of the FFT
+            # which represents the positive frequencies
+            out.append(tf.math.abs(fft[: (sample_rate // 2), :]).numpy())
+        return np.array(out)
 
 
 class ComprehensiveImageRunner(BasicImageRunner):
@@ -88,6 +131,34 @@ class ComprehensiveImageRunner(BasicImageRunner):
                 ImageOcclusionPerturbator(p=1.0),
                 ImageCompressionPerturbator(p=1.0),
                 ImagePixelizePerturbator(p=1.0)
+                ]
+
+    def _get_all_coverage_calculators(self, model):
+        return [
+            NeuronCoverageCalculator(model),
+            StrongNeuronActivationCoverageCalculator(model),
+            KMultiSectionNeuronCoverageCalculator(model),
+            NeuronBoundaryCoverageCalculator(model),
+            TopKNeuronCoverageCalculator(model),
+            TopKNeuronPatternsCalculator(model),
+        ]
+
+
+class ComprehensiveAudioRunner(BasicAudioRunner):
+    def __init__(self, dataset_x, dataset_y, model, can_batch_predict=True):
+        super().__init__(self._get_all_perturbators(), self._get_all_coverage_calculators(model), dataset_x, dataset_y,
+                         model, can_batch_predict)
+
+    def _get_all_perturbators(self):
+        return [AudioBackgroundWhiteNoisePerturbator(p=1.0),
+                # AudioCompressionPerturbator(p=1.0),
+                AudioPitchPerturbator(p=1.0),
+                AudioClippingPerturbator(p=1.0),
+                AudioVolumePerturbator(p=1.0),
+                AudioEchoPerturbator(p=1.0),
+                AudioShortNoisePerturbator(p=1.0),
+                AudioBackgroundNoisePerturbator(p=1.0),
+                AudioImpulseResponsePerturbator(p=1.0)
                 ]
 
     def _get_all_coverage_calculators(self, model):
