@@ -1,3 +1,5 @@
+import copy
+import itertools
 import re
 import string
 from abc import ABC, abstractmethod
@@ -17,8 +19,6 @@ from insynth.perturbators.audio import AudioBackgroundWhiteNoisePerturbator, Aud
 from insynth.perturbators.image import ImageNoisePerturbator, ImageBrightnessPerturbator, ImageContrastPerturbator, \
     ImageSharpnessPerturbator, ImageFlipPerturbator, ImageOcclusionPerturbator, ImageCompressionPerturbator, \
     ImagePixelizePerturbator
-
-import tensorflow as tf
 
 from insynth.perturbators.text import TextTypoPerturbator, TextCasePerturbator, TextWordRemovalPerturbator, \
     TextStopWordRemovalPerturbator, TextWordSwitchPerturbator, TextCharacterSwitchPerturbator, \
@@ -43,12 +43,22 @@ class BasicRunner(AbstractRunner):
     def run(self, save_mutated_samples=False, output_path=None):
         results = {}
         original_dataset = self._pre_prediction(self.dataset_x)
+
         y_pred = np.argmax(self.model.predict(original_dataset, verbose=1), axis=1)
 
-        self.put_results_into_dict(results, 'original', self.dataset_y, y_pred)
+        self.put_results_into_dict(results, 'Original', self.dataset_y, y_pred)
+
+        for sample, coverage_calculator in itertools.product(original_dataset, self.coverage_calculators):
+            coverage_calculator.update_coverage(np.array([sample]))
+
+        self.put_coverage_into_dict(results, 'Original',
+                                    self.coverage_calculators)
+
+        all_coverage_calculators = [copy.copy(calculator) for calculator in self.coverage_calculators]
 
         for perturbator_index, perturbator in enumerate(self.perturbators):
             perturbator_name = type(perturbator).__name__
+            mutated_coverage_calculators = [copy.copy(calculator) for calculator in self.coverage_calculators]
             mutated_samples = self._apply_perturbator(self.dataset_x, perturbator)
             if save_mutated_samples:
                 for sample_index, mutated_sample in enumerate(mutated_samples):
@@ -59,7 +69,25 @@ class BasicRunner(AbstractRunner):
             predictions = np.argmax(self.model.predict(perturbated_dataset, verbose=1), axis=1)
 
             self.put_results_into_dict(results, perturbator_name, self.dataset_y, predictions)
-        return pd.DataFrame.from_dict(results, orient='index')
+
+            for sample, coverage_calculator in itertools.product(perturbated_dataset, mutated_coverage_calculators):
+                coverage_calculator.update_coverage(np.array([sample]))
+            self.put_coverage_into_dict(results, perturbator_name,
+                                        mutated_coverage_calculators)
+
+            for original_calc, mutated_calc in zip(all_coverage_calculators, mutated_coverage_calculators):
+                original_calc.merge(mutated_calc)
+        results['All'] = {}
+        self.put_coverage_into_dict(results, 'All',
+                                    all_coverage_calculators)
+        df = pd.DataFrame.from_dict(results, orient='index')
+        df.loc['All',0:7] = df.mean(numeric_only=True)
+        return df, (1 - df.loc['Original', 'acc'] + df.loc['All', 'acc'])
+
+    def put_coverage_into_dict(self, dct, perturbator_name, coverage_calculators):
+        for coverage_result, calculator_name in zip(map(lambda x: x.get_coverage(), coverage_calculators),
+                                                    map(lambda x: type(x).__name__, coverage_calculators)):
+            dct[perturbator_name][calculator_name] = coverage_result
 
     def put_results_into_dict(self, dct, name, y_true, y_pred):
         results = classification_report(y_true,
@@ -102,7 +130,8 @@ class BasicTextRunner(BasicRunner):
         with open(output_path + '.txt', 'w') as txt_out:
             txt_out.write(sample)
 
-    def custom_standardization(self,input_data):
+    def custom_standardization(self, input_data):
+        import tensorflow as tf
         lowercase = tf.strings.lower(input_data)
         stripped_html = tf.strings.regex_replace(lowercase, '<br />', ' ')
         return tf.strings.regex_replace(stripped_html,
@@ -151,7 +180,8 @@ class BasicAudioRunner(BasicRunner):
 
 
 class ComprehensiveImageRunner(BasicImageRunner):
-    def __init__(self, dataset_x, dataset_y, model):
+    def __init__(self, dataset_x, dataset_y, model, snac_data):
+        self.snac_data = snac_data
         super().__init__(self._get_all_perturbators(), self._get_all_coverage_calculators(model), dataset_x, dataset_y,
                          model)
 
@@ -167,7 +197,7 @@ class ComprehensiveImageRunner(BasicImageRunner):
                 ]
 
     def _get_all_coverage_calculators(self, model):
-        return [
+        calcs = [
             NeuronCoverageCalculator(model),
             StrongNeuronActivationCoverageCalculator(model),
             KMultiSectionNeuronCoverageCalculator(model),
@@ -175,10 +205,16 @@ class ComprehensiveImageRunner(BasicImageRunner):
             TopKNeuronCoverageCalculator(model),
             TopKNeuronPatternsCalculator(model),
         ]
+        for calc in calcs:
+            update_neuron_bounds_op = getattr(calc, "update_neuron_bounds", None)
+            if callable(update_neuron_bounds_op):
+                calc.update_neuron_bounds(self._pre_prediction(self.snac_data))
+        return calcs
 
 
 class ComprehensiveAudioRunner(BasicAudioRunner):
-    def __init__(self, dataset_x, dataset_y, model):
+    def __init__(self, dataset_x, dataset_y, model, snac_data):
+        self.snac_data = snac_data
         super().__init__(self._get_all_perturbators(), self._get_all_coverage_calculators(model), dataset_x, dataset_y,
                          model)
 
@@ -195,7 +231,7 @@ class ComprehensiveAudioRunner(BasicAudioRunner):
                 ]
 
     def _get_all_coverage_calculators(self, model):
-        return [
+        calcs = [
             NeuronCoverageCalculator(model),
             StrongNeuronActivationCoverageCalculator(model),
             KMultiSectionNeuronCoverageCalculator(model),
@@ -203,10 +239,16 @@ class ComprehensiveAudioRunner(BasicAudioRunner):
             TopKNeuronCoverageCalculator(model),
             TopKNeuronPatternsCalculator(model),
         ]
+        for calc in calcs:
+            update_neuron_bounds_op = getattr(calc, "update_neuron_bounds", None)
+            if callable(update_neuron_bounds_op):
+                calc.update_neuron_bounds(self._pre_prediction(self.snac_data))
+        return calcs
 
 
 class ComprehensiveTextRunner(BasicTextRunner):
-    def __init__(self, dataset_x, dataset_y, model):
+    def __init__(self, dataset_x, dataset_y, model, snac_data):
+        self.snac_data = snac_data
         super().__init__(self._get_all_perturbators(), self._get_all_coverage_calculators(model), dataset_x, dataset_y,
                          model)
 
@@ -221,10 +263,15 @@ class ComprehensiveTextRunner(BasicTextRunner):
                 ]
 
     def _get_all_coverage_calculators(self, model):
-        return [
+        calcs = [
             NeuronCoverageCalculator(model),
             StrongNeuronActivationCoverageCalculator(model),
             KMultiSectionNeuronCoverageCalculator(model),
             NeuronBoundaryCoverageCalculator(model),
             TopKNeuronCoverageCalculator(model),
             TopKNeuronPatternsCalculator(model)]
+        for calc in calcs:
+            update_neuron_bounds_op = getattr(calc, "update_neuron_bounds", None)
+            if callable(update_neuron_bounds_op):
+                calc.update_neuron_bounds(self._pre_prediction(self.snac_data))
+        return calcs

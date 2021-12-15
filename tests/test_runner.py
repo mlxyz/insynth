@@ -1,4 +1,5 @@
 import unittest
+from unittest import skip
 
 import librosa
 import numpy as np
@@ -85,6 +86,7 @@ class TestRunner(unittest.TestCase):
         # model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, validation_split=0.1)
 
         return model
+
     def _build_sentiment_model(self):
         model = tf.keras.Sequential([
             layers.Embedding(10000 + 1, 16),
@@ -97,7 +99,7 @@ class TestRunner(unittest.TestCase):
                       optimizer='adam',
                       metrics=tf.metrics.BinaryAccuracy(threshold=0.0))
         return model
-
+    @skip
     def test_BasicImageRunner(self):
         (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
         model = self._generate_mnist_model()
@@ -108,24 +110,26 @@ class TestRunner(unittest.TestCase):
                                        strength_prob_args={'loc': 0.1, 'scale': 0.05})],
             [NeuronCoverageCalculator(model)], x_test[-1000:], y_test[-1000:],
             model)
-        report = runner.run(save_mutated_samples=False)
-        assert len(report.columns) == 7
+        report, robustness = runner.run(save_mutated_samples=False)
+        assert len(report.columns) == 13
         assert report.isna().sum().sum() == 0
-
+        assert isinstance(robustness, float)
+    @skip
     def test_ComprehensiveImageRunner(self):
         (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
         model = self._generate_mnist_model()
         runner = ComprehensiveImageRunner(
-            x_test[-1000:], y_test[-1000:],
-            model)
+            x_test[-10:], y_test[-10:],
+            model, x_test[0:10])
         # filter out compression perturbator as it generates colored images which cannot be processed by this model
         runner.perturbators = [perturbator for perturbator in runner.perturbators if
                                not isinstance(perturbator, ImageCompressionPerturbator)]
-        report = runner.run(save_mutated_samples=False)
-        print(report)
-        assert len(report.columns) == 7
+        report, robustness = runner.run(save_mutated_samples=False)
+        print(report.to_string())
+        assert len(report.columns) == 13
         assert report.isna().sum().sum() == 0
-
+        assert isinstance(robustness, float)
+    @skip
     def test_ComprehensiveAudioRunner(self):
         utils.download_and_unzip('https://insynth-data.s3.eu-central-1.amazonaws.com/speaker_recognition.zip',
                                  'data/speaker_recognition/')
@@ -140,14 +144,15 @@ class TestRunner(unittest.TestCase):
         y_test = LabelEncoder().fit_transform(y_test)
         model = self._build_audio_model()
         runner = ComprehensiveAudioRunner(
-            x_test[-1000:], y_test[-1000:],
-            model)
+            x_test[-10:], y_test[-10:],
+            model, x_test[0:10])
 
-        report = runner.run(save_mutated_samples=False)
+        report, robustness = runner.run(save_mutated_samples=False)
         print(report)
-        assert len(report.columns) == 7
+        assert len(report.columns) == 13
         assert report.isna().sum().sum() == 0
-
+        assert isinstance(robustness, float)
+    @skip
     def test_ComprehrensiveTextRunner(self):
         utils.download_and_unzip('https://insynth-data.s3.eu-central-1.amazonaws.com/sentiment_classification.zip',
                                  'data/sentiment_classification/')
@@ -161,8 +166,9 @@ class TestRunner(unittest.TestCase):
                 y_test.append(root_dir)
         y_test = LabelEncoder().fit_transform(y_test)
         model = self._build_sentiment_model()
-        runner = ComprehensiveTextRunner(x_test, y_test, model)
-        report = runner.run(save_mutated_samples=False)
-        print(report)
-        assert len(report.columns) == 7
+        runner = ComprehensiveTextRunner(x_test, y_test, model, x_test)
+        report, robustness = runner.run(save_mutated_samples=False)
+        print(report.to_string())
+        assert len(report.columns) == 13
         assert report.isna().sum().sum() == 0
+        assert isinstance(robustness, float)

@@ -1,5 +1,6 @@
 import random
 from collections import defaultdict
+from copy import deepcopy, copy
 
 import numpy as np
 
@@ -20,7 +21,7 @@ def _init_dict(model) -> dict:
 
 def get_layers_with_neurons(model):
     return [layer for layer in model.layers if
-            'flatten' not in layer.name and 'input' not in layer.name]
+            'flatten' not in layer.name and 'input' not in layer.name and 'embedding' not in layer.name and 'dropout' not in layer.name]
 
 
 def get_model_activations(model, input_data):
@@ -60,7 +61,19 @@ def iterate_over_neuron_activations(layer_activations):
         map(lambda neuron_index: layer_activations[np.unravel_index(neuron_index, activations_shape)], neuron_indices)))
 
 
+def merge_dicts(dict_1, dict_2):
+    for key in dict_1.keys():
+        dict_1[key] = dict_1[key] or dict_2[key]
+    return dict_1
+
+
 class NeuronCoverageCalculator(AbstractCoverageCalculator):
+    def __copy__(self):
+        self_copy = NeuronCoverageCalculator(self.model, self.activation_threshold)
+        self_copy._layers_with_neurons = deepcopy(self._layers_with_neurons)
+        self_copy.coverage_dict = deepcopy(self.coverage_dict)
+        return self_copy
+
     def get_random_uncovered_neuron(self):
         return get_random_uncovered_neuron(self.coverage_dict)
 
@@ -71,7 +84,6 @@ class NeuronCoverageCalculator(AbstractCoverageCalculator):
         self.coverage_dict = _init_dict(model)
 
     def update_coverage(self, input_data):
-
         for layer_name, layer_activations in iterate_over_layer_activations(self.model, self._layers_with_neurons,
                                                                             input_data):
             for neuron_index, neuron_activation in iterate_over_neuron_activations(layer_activations):
@@ -86,8 +98,18 @@ class NeuronCoverageCalculator(AbstractCoverageCalculator):
             'covered_neurons_percentage': covered_percentage
         }
 
+    def merge(self, other_calculator):
+        self.coverage_dict = merge_dicts(self.coverage_dict, other_calculator.coverage_dict)
+
 
 class StrongNeuronActivationCoverageCalculator(AbstractCoverageCalculator):
+    def __copy__(self):
+        self_copy = StrongNeuronActivationCoverageCalculator(self.model)
+        self_copy._layers_with_neurons = deepcopy(self._layers_with_neurons)
+        self_copy.coverage_dict = deepcopy(self.coverage_dict)
+        self_copy.neuron_bounds_dict = deepcopy(self.neuron_bounds_dict)
+        return self_copy
+
     def __init__(self, model):
         super().__init__(model)
         self._layers_with_neurons = get_layers_with_neurons(self.model)
@@ -98,7 +120,6 @@ class StrongNeuronActivationCoverageCalculator(AbstractCoverageCalculator):
         return get_random_uncovered_neuron(self.coverage_dict)
 
     def update_neuron_bounds(self, input_data):
-
         for layer_name, layer_activations in iterate_over_layer_activations(self.model, self._layers_with_neurons,
                                                                             input_data):
             for neuron_index, neuron_activation in iterate_over_neuron_activations(layer_activations):
@@ -113,7 +134,6 @@ class StrongNeuronActivationCoverageCalculator(AbstractCoverageCalculator):
                         self.neuron_bounds_dict[neuron_position] = (neuron_activation, upper)
 
     def update_coverage(self, input_data):
-
         for layer_name, layer_activations in iterate_over_layer_activations(self.model, self._layers_with_neurons,
                                                                             input_data):
             for neuron_index, neuron_activation in iterate_over_neuron_activations(layer_activations):
@@ -129,8 +149,18 @@ class StrongNeuronActivationCoverageCalculator(AbstractCoverageCalculator):
             'covered_neurons_percentage': covered_percentage
         }
 
+    def merge(self, other_calculator):
+        self.coverage_dict = merge_dicts(self.coverage_dict, other_calculator.coverage_dict)
+
 
 class KMultiSectionNeuronCoverageCalculator(AbstractCoverageCalculator):
+    def __copy__(self):
+        self_copy = KMultiSectionNeuronCoverageCalculator(self.model, self.k)
+        self_copy._layers_with_neurons = deepcopy(self._layers_with_neurons)
+        self_copy.coverage_dict = deepcopy(self.coverage_dict)
+        self_copy.neuron_bounds_dict = deepcopy(self.neuron_bounds_dict)
+        return self_copy
+
     def __init__(self, model, k=3):
         super().__init__(model)
         self.k = k
@@ -202,8 +232,21 @@ class KMultiSectionNeuronCoverageCalculator(AbstractCoverageCalculator):
             'sections_covered_percentage': sections_covered_percentage,
         }
 
+    def merge(self, other_calculator):
+        for key in self.coverage_dict.keys():
+            self.coverage_dict[key] = [self.coverage_dict[key][index] or other_calculator.coverage_dict[key][index] for
+                                       index, _ in
+                                       enumerate(self.coverage_dict[key])]
+
 
 class NeuronBoundaryCoverageCalculator(AbstractCoverageCalculator):
+    def __copy__(self):
+        self_copy = NeuronBoundaryCoverageCalculator(self.model)
+        self_copy._layers_with_neurons = deepcopy(self._layers_with_neurons)
+        self_copy.coverage_dict = deepcopy(self.coverage_dict)
+        self_copy.neuron_bounds_dict = deepcopy(self.neuron_bounds_dict)
+        return self_copy
+
     def __init__(self, model):
         super().__init__(model)
         self._layers_with_neurons = get_layers_with_neurons(self.model)
@@ -272,8 +315,21 @@ class NeuronBoundaryCoverageCalculator(AbstractCoverageCalculator):
                 coverage_dict[(layer.name, index)] = (False, False)
         return coverage_dict
 
+    def merge(self, other_calculator):
+        for key in self.coverage_dict.keys():
+            self.coverage_dict[key] = tuple(
+                [self.coverage_dict[key][index] or other_calculator.coverage_dict[key][index] for index, _ in
+                 enumerate(self.coverage_dict[key])])
+
 
 class TopKNeuronCoverageCalculator(AbstractCoverageCalculator):
+    def __copy__(self):
+        self_copy = TopKNeuronCoverageCalculator(self.model, self.k)
+        self_copy._layers_with_neurons = deepcopy(self._layers_with_neurons)
+        self_copy.coverage_dict = deepcopy(self.coverage_dict)
+        self.k = deepcopy(self.k)
+        return self_copy
+
     def get_random_uncovered_neuron(self):
         uncovered_neurons = []
         for layer in get_layers_with_neurons(self.model):
@@ -297,6 +353,10 @@ class TopKNeuronCoverageCalculator(AbstractCoverageCalculator):
             coverage_dict[layer.name] = set()
         return coverage_dict
 
+    def merge(self, other_calculator):
+        for key in self.coverage_dict.keys():
+            self.coverage_dict[key] |= other_calculator.coverage_dict[key]
+
     def update_coverage(self, input_data):
 
         for layer_name, layer_activations in iterate_over_layer_activations(self.model, self._layers_with_neurons,
@@ -318,6 +378,16 @@ class TopKNeuronCoverageCalculator(AbstractCoverageCalculator):
 
 
 class TopKNeuronPatternsCalculator(AbstractCoverageCalculator):
+    def merge(self, other_calculator):
+        self.coverage_dict |= other_calculator.coverage_dict
+
+    def __copy__(self):
+        self_copy = TopKNeuronPatternsCalculator(self.model, self.k)
+        self_copy._layers_with_neurons = deepcopy(self._layers_with_neurons)
+        self_copy.coverage_dict = deepcopy(self.coverage_dict)
+        self.k = deepcopy(self.k)
+        return self_copy
+
     def get_random_uncovered_neuron(self):
         raise NotImplementedError
 

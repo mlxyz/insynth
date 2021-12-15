@@ -12,3 +12,11 @@ class AbstractCoverageCalculator(ABC):
     @abstractmethod
     def get_random_uncovered_neuron(self):
         raise NotImplementedError
+
+    @abstractmethod
+    def __copy__(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def merge(self, other_calculator):
+        raise NotImplementedError
