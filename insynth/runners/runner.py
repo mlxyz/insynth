@@ -184,6 +184,7 @@ class ComprehensiveImageRunner(BasicImageRunner):
         self.snac_data = snac_data
         super().__init__(self._get_all_perturbators(), self._get_all_coverage_calculators(model), dataset_x, dataset_y,
                          model)
+        del self.snac_data
 
     def _get_all_perturbators(self):
         return [ImageNoisePerturbator(p=1.0),
