@@ -1,4 +1,6 @@
+import os
 import unittest
+from pathlib import Path
 from unittest import skip
 
 import librosa
@@ -15,7 +17,6 @@ from insynth.perturbators.image import ImageBrightnessPerturbator, ImageContrast
     ImageCompressionPerturbator
 from insynth.runners.runner import ComprehensiveImageRunner, BasicImageRunner, ComprehensiveAudioRunner, \
     ComprehensiveTextRunner
-import os
 
 
 class TestRunner(unittest.TestCase):
@@ -99,28 +100,14 @@ class TestRunner(unittest.TestCase):
                       optimizer='adam',
                       metrics=tf.metrics.BinaryAccuracy(threshold=0.0))
         return model
-    @skip
-    def test_BasicImageRunner(self):
-        (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
-        model = self._generate_mnist_model()
-        runner = BasicImageRunner(
-            [ImageBrightnessPerturbator(p=1.0), ImageContrastPerturbator(p=1.0),
-             ImageOcclusionPerturbator(p=1.0, width_prob_args={'loc': 2, 'scale': 2},
-                                       height_prob_args={'loc': 2, 'scale': 2},
-                                       strength_prob_args={'loc': 0.1, 'scale': 0.05})],
-            [NeuronCoverageCalculator(model)], x_test[-1000:], y_test[-1000:],
-            model)
-        report, robustness = runner.run(save_mutated_samples=False)
-        assert len(report.columns) == 13
-        assert report.isna().sum().sum() == 0
-        assert isinstance(robustness, float)
-    @skip
+
     def test_ComprehensiveImageRunner(self):
         (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
         model = self._generate_mnist_model()
+        data_generator = lambda: (x for x in x_test[-10:])
         runner = ComprehensiveImageRunner(
-            x_test[-10:], y_test[-10:],
-            model, x_test[0:10])
+            data_generator, y_test[-10:],
+            model, data_generator)
         # filter out compression perturbator as it generates colored images which cannot be processed by this model
         runner.perturbators = [perturbator for perturbator in runner.perturbators if
                                not isinstance(perturbator, ImageCompressionPerturbator)]
@@ -129,7 +116,7 @@ class TestRunner(unittest.TestCase):
         assert len(report.columns) == 13
         assert report.isna().sum().sum() == 0
         assert isinstance(robustness, float)
-    @skip
+
     def test_ComprehensiveAudioRunner(self):
         utils.download_and_unzip('https://insynth-data.s3.eu-central-1.amazonaws.com/speaker_recognition.zip',
                                  'data/speaker_recognition/')
@@ -139,21 +126,23 @@ class TestRunner(unittest.TestCase):
             if not files:
                 continue
             for file in files:
-                x_test.append(librosa.load(os.path.join(root_dir, file), sr=None))
+                x_test.append(os.path.join(root_dir, file))
                 y_test.append(root_dir)
+        data_generator = lambda: (librosa.load(file, sr=None) for file in x_test)
         y_test = LabelEncoder().fit_transform(y_test)
         model = self._build_audio_model()
         runner = ComprehensiveAudioRunner(
-            x_test[-10:], y_test[-10:],
-            model, x_test[0:10])
+            data_generator, y_test,
+            model, data_generator)
+        runner.coverage_calculators = []
 
         report, robustness = runner.run(save_mutated_samples=False)
         print(report)
-        assert len(report.columns) == 13
+        assert len(report.columns) == 7
         assert report.isna().sum().sum() == 0
         assert isinstance(robustness, float)
-    @skip
-    def test_ComprehrensiveTextRunner(self):
+
+    def test_ComprehensiveTextRunner(self):
         utils.download_and_unzip('https://insynth-data.s3.eu-central-1.amazonaws.com/sentiment_classification.zip',
                                  'data/sentiment_classification/')
         x_test = []
@@ -162,11 +151,12 @@ class TestRunner(unittest.TestCase):
             if not files:
                 continue
             for file in files:
-                x_test.append(open(os.path.join(root_dir, file), 'r').read())
+                x_test.append(os.path.join(root_dir, file))
                 y_test.append(root_dir)
+        data_generator = lambda: (Path(file).read_text() for file in x_test)
         y_test = LabelEncoder().fit_transform(y_test)
         model = self._build_sentiment_model()
-        runner = ComprehensiveTextRunner(x_test, y_test, model, x_test)
+        runner = ComprehensiveTextRunner(data_generator, y_test, model, data_generator)
         report, robustness = runner.run(save_mutated_samples=False)
         print(report.to_string())
         assert len(report.columns) == 13
