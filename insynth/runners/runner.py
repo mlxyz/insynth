@@ -1,13 +1,15 @@
 import copy
+import json
+import logging
 import re
 import string
 from abc import ABC, abstractmethod
 
 import numpy as np
 import pandas as pd
-from PIL import Image
 from keras import layers
 from sklearn.metrics import classification_report
+from tqdm import tqdm
 
 from insynth.metrics.coverage.neuron import StrongNeuronActivationCoverageCalculator, \
     KMultiSectionNeuronCoverageCalculator, NeuronCoverageCalculator, NeuronBoundaryCoverageCalculator, \
@@ -42,10 +44,10 @@ class BasicRunner(AbstractRunner):
         results = {}
 
         y_pred = []
-
-        for sample in self.dataset_x():
+        logging.info('Processing original dataset...')
+        for sample in tqdm(self.dataset_x(), desc='Processing Original Dataset...'):
             transformed_sample = self._pre_prediction(sample)
-            y_pred.append(np.argmax(self.model.predict(transformed_sample, verbose=1)))
+            y_pred.append(np.argmax(self.model.predict(transformed_sample, verbose=0)))
             for coverage_calculator in self.coverage_calculators:
                 coverage_calculator.update_coverage(transformed_sample)
 
@@ -54,20 +56,20 @@ class BasicRunner(AbstractRunner):
                                     self.coverage_calculators)
 
         all_coverage_calculators = [copy.copy(calculator) for calculator in self.coverage_calculators]
-
-        for perturbator_index, perturbator in enumerate(self.perturbators):
+        logging.info('Processing mutated dataset...')
+        for perturbator_index, perturbator in tqdm(enumerate(self.perturbators), desc='Applying Perturbators...'):
             perturbator_name = type(perturbator).__name__
             mutated_coverage_calculators = [copy.copy(calculator) for calculator in self.coverage_calculators]
             mutated_samples = map(lambda sample: self._apply_perturbator(sample, perturbator), self.dataset_x())
 
             predictions = []
-            for index, mutated_sample in enumerate(mutated_samples):
+            for index, mutated_sample in tqdm(enumerate(mutated_samples), desc='Running on Samples...'):
                 if save_mutated_samples:
                     self._save(mutated_sample, f'{output_path}/{perturbator_name}_{index}')
 
                 transformed_mutated_sample = self._pre_prediction(mutated_sample)
 
-                predictions.append(np.argmax(self.model.predict(transformed_mutated_sample, verbose=1)))
+                predictions.append(np.argmax(self.model.predict(transformed_mutated_sample, verbose=0)))
 
                 for calculator in mutated_coverage_calculators:
                     calculator.update_coverage(transformed_mutated_sample)
@@ -81,6 +83,7 @@ class BasicRunner(AbstractRunner):
         results['All'] = {}
         self.put_coverage_into_dict(results, 'All',
                                     all_coverage_calculators)
+        # logging.info('Result: ' + json.dumps(results))
         df = pd.DataFrame.from_dict(results, orient='index')
         df.loc['All', 0:7] = df.mean(numeric_only=True)
         return df, (1 - df.loc['Original', 'acc'] + df.loc['All', 'acc'])
@@ -93,7 +96,8 @@ class BasicRunner(AbstractRunner):
     def put_results_into_dict(self, dct, name, y_true, y_pred):
         results = classification_report(y_true,
                                         y_pred,
-                                        output_dict=True)
+                                        output_dict=True, zero_division=0)
+        logging.info(f'Results for {name}: ' + json.dumps(results))
         dct[name] = {
             'acc': results['accuracy'],
             'macro_f1': results['macro avg']['f1-score'],
@@ -117,12 +121,14 @@ class BasicRunner(AbstractRunner):
 
 class BasicImageRunner(BasicRunner):
     def _apply_perturbator(self, sample, perturbator):
-        return perturbator.apply(Image.fromarray(sample))
+        return perturbator.apply(sample)
 
     def _save(self, sample, output_path):
         sample.save(output_path + '.jpg', 'JPEG')
+
     def _pre_prediction(self, sample):
         return np.expand_dims(np.array(sample), axis=0)
+
 
 class BasicTextRunner(BasicRunner):
     def _apply_perturbator(self, sample, perturbator):
@@ -205,8 +211,8 @@ class ComprehensiveImageRunner(BasicImageRunner):
         for calc in calcs:
             update_neuron_bounds_op = getattr(calc, "update_neuron_bounds", None)
             if callable(update_neuron_bounds_op):
-                calc.update_neuron_bounds(
-                    np.concatenate([self._pre_prediction(sample) for sample in self.snac_data()], axis=0))
+                for sample in tqdm(self.snac_data(), desc='Processing SNAC...'):
+                    calc.update_neuron_bounds(self._pre_prediction(sample))
         return calcs
 
 

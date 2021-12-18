@@ -324,7 +324,8 @@ class TopKNeuronCoverageCalculator(AbstractCoverageCalculator):
                                                                             input_data):
             coverage_dict = self.coverage_dict[layer_name]
             layer_activations = layer_activations.flatten()
-            top_k_indices = np.argpartition(layer_activations, -self.k)[-self.k:]
+            k = min(len(layer_activations), self.k)
+            top_k_indices = np.argpartition(layer_activations, -k)[-k:]
             coverage_dict |= set(top_k_indices)
 
     def get_coverage(self) -> dict:

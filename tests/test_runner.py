@@ -6,6 +6,7 @@ from unittest import skip
 import librosa
 import numpy as np
 import tensorflow as tf
+from PIL import Image
 from keras.losses import BinaryCrossentropy
 from sklearn.preprocessing import LabelEncoder
 from tensorflow import keras
@@ -104,7 +105,7 @@ class TestRunner(unittest.TestCase):
     def test_ComprehensiveImageRunner(self):
         (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
         model = self._generate_mnist_model()
-        data_generator = lambda: (x for x in x_test[-10:])
+        data_generator = lambda: (Image.fromarray(x) for x in x_test[-10:])
         runner = ComprehensiveImageRunner(
             data_generator, y_test[-10:],
             model, data_generator)

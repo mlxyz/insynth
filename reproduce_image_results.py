@@ -1,20 +1,42 @@
 import os
+import random
 
 from PIL import Image
-from sklearn.preprocessing import LabelEncoder
 from tensorflow import keras
-
-### IMAGENET ###
-from tqdm import tqdm
 
 # download data from https://s3.amazonaws.com/fast-ai-imageclas/imagenette2-320.tgz and put val into data/imagenette and train into data/imagenette_snac
 from insynth.runners.runner import ComprehensiveImageRunner
+
+### IMAGENET ###
 
 vgg16_model = keras.applications.VGG16(
     include_top=True,
     weights="imagenet",
     classifier_activation="softmax"
 )
+path_to_class = {
+    'data/imagenette/n01440764': 0,
+    'data/imagenette/n02102040': 217,
+    'data/imagenette/n02979186': 482,
+    'data/imagenette/n03000684': 491,
+    'data/imagenette/n03028079': 497,
+    'data/imagenette/n03394916': 566,
+    'data/imagenette/n03417042': 569,
+    'data/imagenette/n03425413': 571,
+    'data/imagenette/n03445777': 574,
+    'data/imagenette/n03888257': 701,
+
+    'data/imagenette_snac/n01440764': 0,
+    'data/imagenette_snac/n02102040': 217,
+    'data/imagenette_snac/n02979186': 482,
+    'data/imagenette_snac/n03000684': 491,
+    'data/imagenette_snac/n03028079': 497,
+    'data/imagenette_snac/n03394916': 566,
+    'data/imagenette_snac/n03417042': 569,
+    'data/imagenette_snac/n03425413': 571,
+    'data/imagenette_snac/n03445777': 574,
+    'data/imagenette_snac/n03888257': 701
+}
 
 x_test = []
 y_test = []
@@ -23,20 +45,17 @@ for root_dir, directories, files in os.walk('data/imagenette/'):
     if not files:
         continue
     for file in files:
-        image = Image.open(os.path.join(root_dir, file))
-        image.load()
-        x_test.append(image.convert('RGB'))
-        y_test.append(root_dir)
+        x_test.append(os.path.join(root_dir, file))
+        y_test.append(path_to_class[root_dir])
 
-y_test = LabelEncoder().fit_transform(y_test)
+random.Random(12345).shuffle(x_test)
+random.Random(12345).shuffle(y_test)
+x_test = x_test[-1:]
+y_test = y_test[-1:]
+
+x_test_generator = lambda: (Image.open(file).resize((224, 224)).convert('RGB') for file in x_test)
 
 print(f'Dataset: Found {len(x_test)} images of {len(set(y_test))} classes.')
-
-print('Resizing images...')
-x_test = [x.resize((224, 224)) for x in tqdm(x_test)]
-
-y_test = y_test[-100:]
-x_test = x_test[-100:]
 
 x_test_snac = []
 y_test_snac = []
@@ -45,23 +64,23 @@ for root_dir, directories, files in os.walk('data/imagenette_snac/'):
     if not files:
         continue
     for file in files:
-        image = Image.open(os.path.join(root_dir, file))
-        image.load()
-        x_test_snac.append(image.convert('RGB'))
-        y_test_snac.append(root_dir)
+        x_test_snac.append(os.path.join(root_dir, file))
+        y_test_snac.append(path_to_class[root_dir])
+random.Random(12345).shuffle(x_test_snac)
+random.Random(12345).shuffle(y_test_snac)
+x_test_snac = x_test_snac[-10:]
+y_test_snac = y_test_snac[-10:]
 
-y_test_snac = LabelEncoder().fit_transform(y_test_snac)
-y_test_snac = y_test_snac[-100:]
-x_test_snac = x_test_snac[-100:]
+x_test_snac_generator = lambda: (Image.open(file).resize((224, 224)).convert('RGB') for file in x_test_snac)
 
 print(f'SNAC: Found {len(x_test_snac)} images of {len(set(y_test_snac))} classes.')
 
-print('Resizing images...')
-x_test_snac = [x.resize((224, 224)) for x in tqdm(x_test_snac)]
+runner = ComprehensiveImageRunner(x_test_generator, y_test, vgg16_model, x_test_snac_generator)
 
-runner = ComprehensiveImageRunner(x_test, y_test, vgg16_model, x_test_snac)
+report, robustness = runner.run(False, 'output/vgg16_imagenette/')
 
-del x_test_snac
-del y_test_snac
+print(report.to_string())
+print(robustness)
 
-report, robustness = runner.run(True, 'output/vgg16_imagenette/')
+os.makedirs('output/imagenette/vgg16/')
+report.to_csv('output/imagenette/vgg16/report.csv')
