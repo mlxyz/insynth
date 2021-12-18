@@ -38,29 +38,10 @@ def neurons_covered(coverage_dict):
     return covered_neurons, total_neurons, covered_neurons / float(total_neurons)
 
 
-def get_random_uncovered_neuron(coverage_dict):
-    uncovered_neurons = []
-    for layer_name, arr in coverage_dict.items():
-        uncovered_neurons_indices = np.argwhere(arr == False).flatten()
-        uncovered_neurons.extend([(layer_name, neuron_index) for neuron_index in uncovered_neurons_indices])
-    if uncovered_neurons:
-        return random.choice(uncovered_neurons)
-    else:
-        layer_name = random.choice(list(coverage_dict.keys()))
-        neuron_index = random.choice(coverage_dict[layer_name])
-        return (layer_name, neuron_index)
-
-
 def iterate_over_layer_activations(model, layers, input_data):
     layer_names = [layer.name for layer in layers]
     intermediate_layer_activations = get_model_activations(model, input_data)
     return zip(layer_names, map(lambda x: x[0], intermediate_layer_activations))
-
-
-def iterate_over_neuron_activations(layer_activations):
-    activations_shape = layer_activations.shape
-    neuron_indices = range(num_neurons(activations_shape))
-    return zip(neuron_indices, layer_activations.flatten())
 
 
 def merge_np_arrays(arr1, arr2):
