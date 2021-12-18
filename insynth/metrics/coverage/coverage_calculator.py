@@ -10,10 +10,6 @@ class AbstractCoverageCalculator(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_random_uncovered_neuron(self):
-        raise NotImplementedError
-
-    @abstractmethod
     def __copy__(self):
         raise NotImplementedError
 
