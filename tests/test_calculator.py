@@ -43,25 +43,19 @@ class TestNeuronCoverageCalculator(unittest.TestCase):
 
         calc.update_coverage(np.array([[0, 1]]))
         coverage = calc.get_coverage()
-        uncovered_neuron = calc.get_random_uncovered_neuron()
         assert coverage['total_neurons'] == 5
         assert coverage['covered_neurons'] == 3
         assert coverage['covered_neurons_percentage'] == 3 / 5
-        assert (uncovered_neuron == ('dense_2', 0)) or (uncovered_neuron == ('dense', 1))
 
         calc.update_coverage(np.array([[1, 0]]))
         coverage = calc.get_coverage()
-        uncovered_neuron = calc.get_random_uncovered_neuron()
         assert coverage['total_neurons'] == 5
         assert coverage['covered_neurons'] == 4
-        assert uncovered_neuron == ('dense_2', 0)
 
         calc.update_coverage(np.array([[1, 1]]))
         coverage = calc.get_coverage()
-        uncovered_neuron = calc.get_random_uncovered_neuron()
         assert coverage['total_neurons'] == 5
         assert coverage['covered_neurons'] == 5
-        assert uncovered_neuron is not None
 
     def test_StrongNeuronActivationCoverageCalculator(self):
         model = self._generate_simple_feedforward_model()
@@ -70,17 +64,13 @@ class TestNeuronCoverageCalculator(unittest.TestCase):
 
         calc.update_coverage(np.array([[1, 0]]))
         coverage = calc.get_coverage()
-        uncovered_neuron = calc.get_random_uncovered_neuron()
         assert coverage['total_neurons'] == 5
         assert coverage['covered_neurons'] == 1
-        assert uncovered_neuron != ('dense', 1)
 
         calc.update_coverage(np.array([[1, 1]]))
         coverage = calc.get_coverage()
-        uncovered_neuron = calc.get_random_uncovered_neuron()
         assert coverage['total_neurons'] == 5
         assert coverage['covered_neurons'] == 4
-        assert uncovered_neuron is not None
 
     def test_KMultiSectionNeuronCoverageCalculator(self):
         model = self._generate_simple_feedforward_model()
@@ -90,11 +80,9 @@ class TestNeuronCoverageCalculator(unittest.TestCase):
 
         calc.update_coverage(np.array([[0.5, 0.5]]))
         coverage = calc.get_coverage()
-        uncovered_neuron = calc.get_random_uncovered_neuron()
         assert coverage['total_sections'] == 5 * 3
         assert coverage['covered_sections'] == 5
         assert coverage['sections_covered_percentage'] == 1 / 3
-        assert uncovered_neuron is not None
 
         calc.update_coverage(np.array([[0.1, 0.1]]))
         calc.update_coverage(np.array([[0.8, 0.8]]))
@@ -110,26 +98,20 @@ class TestNeuronCoverageCalculator(unittest.TestCase):
 
         calc.update_coverage(np.array([[2, 0]]))
         coverage = calc.get_coverage()
-        uncovered_neuron = calc.get_random_uncovered_neuron()
         assert coverage['total_corners'] == 10
         assert coverage['covered_corners'] == 1
         assert coverage['corners_covered_percentage'] == 1 / 10
-        assert uncovered_neuron is not None
 
         calc.update_coverage(np.array([[2, 2]]))
         coverage = calc.get_coverage()
-        uncovered_neuron = calc.get_random_uncovered_neuron()
         assert coverage['total_corners'] == 10
         assert coverage['covered_corners'] == 5
-        assert uncovered_neuron is not None
 
         calc.update_coverage(np.array([[-2, -2]]))
         coverage = calc.get_coverage()
-        uncovered_neuron = calc.get_random_uncovered_neuron()
         assert coverage['total_corners'] == 10
         assert coverage['covered_corners'] == 10
         assert coverage['covered_neurons'] == 5
-        assert uncovered_neuron is not None
 
     def test_TopKNeuronCoverageCalculator(self):
         model = self._generate_simple_feedforward_model()
@@ -137,15 +119,11 @@ class TestNeuronCoverageCalculator(unittest.TestCase):
 
         calc.update_coverage(np.array([[1, 0]]))
         coverage = calc.get_coverage()
-        uncovered_neuron = calc.get_random_uncovered_neuron()
-        assert uncovered_neuron is not None
         coverage['top_k_neurons'] = 3
         coverage['top_k_neurons_covered'] = 3 / 5
 
         calc.update_coverage(np.array([[0, 1]]))
         coverage = calc.get_coverage()
-        uncovered_neuron = calc.get_random_uncovered_neuron()
-        assert uncovered_neuron is not None
         coverage['top_k_neurons'] = 5
         coverage['top_k_neurons_covered'] = 1
 
