@@ -3,7 +3,8 @@ import os
 import tensorflow_datasets as tfds
 from PIL import Image
 from tensorflow import keras
-
+import numpy as np
+np.seterr(divide='ignore', invalid='ignore')
 # download data from https://s3.amazonaws.com/fast-ai-imageclas/imagenette2-320.tgz and put val into data/imagenette and train into data/imagenette_snac
 from insynth.runners.runner import ComprehensiveImageRunner
 

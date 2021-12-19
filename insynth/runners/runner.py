@@ -13,8 +13,7 @@ from sklearn.metrics import classification_report
 from tqdm import tqdm
 
 from insynth.metrics.coverage.neuron import StrongNeuronActivationCoverageCalculator, \
-    KMultiSectionNeuronCoverageCalculator, NeuronCoverageCalculator, NeuronBoundaryCoverageCalculator, \
-    TopKNeuronCoverageCalculator, TopKNeuronPatternsCalculator
+    KMultiSectionNeuronCoverageCalculator, NeuronCoverageCalculator
 from insynth.perturbators.audio import AudioBackgroundWhiteNoisePerturbator, AudioPitchPerturbator, \
     AudioClippingPerturbator, AudioVolumePerturbator, AudioEchoPerturbator, \
     AudioShortNoisePerturbator, AudioBackgroundNoisePerturbator, AudioImpulseResponsePerturbator
@@ -62,20 +61,20 @@ class BasicRunner(AbstractRunner):
             perturbator_name = type(perturbator).__name__
             mutated_coverage_calculators = [copy.copy(calculator) for calculator in self.coverage_calculators]
             with mp.Pool(processes=None) as pool:
-                mutated_samples = pool.imap(perturbator.apply,
-                                           self.dataset_x(), chunksize=100)
+                mutated_samples = map(perturbator.apply,
+                                      self.dataset_x())
 
-                predictions = []
-                for index, mutated_sample in tqdm(enumerate(mutated_samples), desc='Running on Samples...'):
-                    if save_mutated_samples:
-                        self._save(mutated_sample, f'{output_path}/{perturbator_name}_{index}')
+            predictions = []
+            for index, mutated_sample in tqdm(enumerate(mutated_samples), desc='Running on Samples...'):
+                if save_mutated_samples:
+                    self._save(mutated_sample, f'{output_path}/{perturbator_name}_{index}')
 
-                    transformed_mutated_sample = self._pre_prediction(mutated_sample)
+                transformed_mutated_sample = self._pre_prediction(mutated_sample)
 
-                    predictions.append(np.argmax(self.model(transformed_mutated_sample, training=False)))
+                predictions.append(np.argmax(self.model(transformed_mutated_sample, training=False)))
 
-                    for calculator in mutated_coverage_calculators:
-                        calculator.update_coverage(transformed_mutated_sample)
+                for calculator in mutated_coverage_calculators:
+                    calculator.update_coverage(transformed_mutated_sample)
 
             self.put_results_into_dict(results, perturbator_name, self.dataset_y, predictions)
             self.put_coverage_into_dict(results, perturbator_name,
@@ -209,10 +208,7 @@ class ComprehensiveImageRunner(BasicImageRunner):
         calcs = [
             NeuronCoverageCalculator(model),
             StrongNeuronActivationCoverageCalculator(model),
-            KMultiSectionNeuronCoverageCalculator(model),
-            NeuronBoundaryCoverageCalculator(model),
-            TopKNeuronCoverageCalculator(model),
-            TopKNeuronPatternsCalculator(model),
+            KMultiSectionNeuronCoverageCalculator(model)
         ]
         for calc in calcs:
             update_neuron_bounds_op = getattr(calc, "update_neuron_bounds", None)
@@ -244,10 +240,7 @@ class ComprehensiveAudioRunner(BasicAudioRunner):
         calcs = [
             NeuronCoverageCalculator(model),
             StrongNeuronActivationCoverageCalculator(model),
-            KMultiSectionNeuronCoverageCalculator(model),
-            NeuronBoundaryCoverageCalculator(model),
-            TopKNeuronCoverageCalculator(model),
-            TopKNeuronPatternsCalculator(model),
+            KMultiSectionNeuronCoverageCalculator(model)
         ]
         for calc in calcs:
             update_neuron_bounds_op = getattr(calc, "update_neuron_bounds", None)
@@ -277,10 +270,7 @@ class ComprehensiveTextRunner(BasicTextRunner):
         calcs = [
             NeuronCoverageCalculator(model),
             StrongNeuronActivationCoverageCalculator(model),
-            KMultiSectionNeuronCoverageCalculator(model),
-            NeuronBoundaryCoverageCalculator(model),
-            TopKNeuronCoverageCalculator(model),
-            TopKNeuronPatternsCalculator(model)]
+            KMultiSectionNeuronCoverageCalculator(model)]
         for calc in calcs:
             update_neuron_bounds_op = getattr(calc, "update_neuron_bounds", None)
             if callable(update_neuron_bounds_op):
