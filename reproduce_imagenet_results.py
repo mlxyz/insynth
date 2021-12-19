@@ -1,9 +1,10 @@
 import os
 
+import numpy as np
 import tensorflow_datasets as tfds
 from PIL import Image
 from tensorflow import keras
-import numpy as np
+
 np.seterr(divide='ignore', invalid='ignore')
 # download data from https://s3.amazonaws.com/fast-ai-imageclas/imagenette2-320.tgz and put val into data/imagenette and train into data/imagenette_snac
 from insynth.runners.runner import ComprehensiveImageRunner
@@ -30,7 +31,9 @@ print(f'SNAC: Found 2000 images of {len(set(y_test_snac))} classes.')
 xception_model = keras.applications.Xception()
 
 runner = ComprehensiveImageRunner(ds_generator(test_dataset, (299, 299)), y_test, xception_model,
-                                  ds_generator(snac_dataset, (299, 299)))
+                                  ds_generator(snac_dataset, (299, 299)),
+                                  lambda sample: keras.applications.xception.preprocess_input(
+                                      np.expand_dims(np.array(sample), axis=0)))
 
 report, robustness = runner.run()
 
@@ -44,7 +47,9 @@ report.to_csv('output/imagenet/xception/report.csv')
 mobilenetv2_model = keras.applications.MobileNetV2()
 
 runner = ComprehensiveImageRunner(ds_generator(test_dataset, (224, 224)), y_test, mobilenetv2_model,
-                                  ds_generator(snac_dataset, (224, 224)))
+                                  ds_generator(snac_dataset, (224, 224)),
+                                  lambda sample: keras.applications.mobilenet_v2.preprocess_input(
+                                      np.expand_dims(np.array(sample), axis=0)))
 
 report, robustness = runner.run()
 
@@ -59,7 +64,9 @@ report.to_csv('output/imagenet/mobilenetv2/report.csv')
 inceptionresnet_model = keras.applications.InceptionResNetV2()
 
 runner = ComprehensiveImageRunner(ds_generator(test_dataset, (299, 299)), y_test, inceptionresnet_model,
-                                  ds_generator(snac_dataset, (299, 299)))
+                                  ds_generator(snac_dataset, (299, 299)),
+                                  lambda sample: keras.applications.inception_resnet_v2.preprocess_input(
+                                      np.expand_dims(np.array(sample), axis=0)))
 
 report, robustness = runner.run()
 

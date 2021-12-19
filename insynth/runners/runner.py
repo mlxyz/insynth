@@ -7,7 +7,6 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 import pandas as pd
-from joblib._multiprocessing_helpers import mp
 from keras import layers
 from sklearn.metrics import classification_report
 from tqdm import tqdm
@@ -33,12 +32,13 @@ class AbstractRunner(ABC):
 
 class BasicRunner(AbstractRunner):
 
-    def __init__(self, perturbators, coverage_calculators, dataset_x, dataset_y, model):
+    def __init__(self, perturbators, coverage_calculators, dataset_x, dataset_y, model, pre_predict_lambda=None):
         self.perturbators = perturbators
         self.coverage_calculators = coverage_calculators
         self.dataset_x = dataset_x
         self.dataset_y = dataset_y
         self.model = model
+        self.pre_predict_lambda = pre_predict_lambda or (lambda sample: np.array(sample))
 
     def run(self, save_mutated_samples=False, output_path=None):
         results = {}
@@ -46,7 +46,7 @@ class BasicRunner(AbstractRunner):
         y_pred = []
         logging.info('Processing original dataset...')
         for sample in tqdm(self.dataset_x(), desc='Processing Original Dataset...'):
-            transformed_sample = self._pre_prediction(sample)
+            transformed_sample = self.pre_predict_lambda(sample)
             y_pred.append(np.argmax(self.model(transformed_sample, training=False)))
             for coverage_calculator in self.coverage_calculators:
                 coverage_calculator.update_coverage(transformed_sample)
@@ -60,16 +60,15 @@ class BasicRunner(AbstractRunner):
         for perturbator_index, perturbator in tqdm(enumerate(self.perturbators), desc='Applying Perturbators...'):
             perturbator_name = type(perturbator).__name__
             mutated_coverage_calculators = [copy.copy(calculator) for calculator in self.coverage_calculators]
-            with mp.Pool(processes=None) as pool:
-                mutated_samples = map(perturbator.apply,
-                                      self.dataset_x())
+            mutated_samples = map(perturbator.apply,
+                                  self.dataset_x())
 
             predictions = []
             for index, mutated_sample in tqdm(enumerate(mutated_samples), desc='Running on Samples...'):
                 if save_mutated_samples:
                     self._save(mutated_sample, f'{output_path}/{perturbator_name}_{index}')
 
-                transformed_mutated_sample = self._pre_prediction(mutated_sample)
+                transformed_mutated_sample = self.pre_predict_lambda(mutated_sample)
 
                 predictions.append(np.argmax(self.model(transformed_mutated_sample, training=False)))
 
@@ -110,33 +109,23 @@ class BasicRunner(AbstractRunner):
             'micro_prec': results['weighted avg']['precision']}
 
     @abstractmethod
-    def _apply_perturbator(self, sample, perturbator):
-        raise NotImplementedError()
-
-    @abstractmethod
     def _save(self, sample, output_path):
         raise NotImplementedError()
 
-    def _pre_prediction(self, sample):
-        return np.array(sample)
-
 
 class BasicImageRunner(BasicRunner):
-    def _apply_perturbator(self, input):
-        sample, perturbator = input
-        return perturbator.apply(sample)
+    def __init__(self, perturbators, coverage_calculators, dataset_x, dataset_y, model, pre_predict_lambda=None):
+        super().__init__(perturbators, coverage_calculators, dataset_x, dataset_y, model,
+                         pre_predict_lambda or (lambda sample: np.expand_dims(np.array(sample), axis=0)))
 
     def _save(self, sample, output_path):
         sample.save(output_path + '.jpg', 'JPEG')
 
-    def _pre_prediction(self, sample):
-        return np.expand_dims(np.array(sample), axis=0)
-
 
 class BasicTextRunner(BasicRunner):
-    def _apply_perturbator(self, input):
-        sample, perturbator = input
-        return perturbator.apply(sample)
+    def __init__(self, perturbators, coverage_calculators, dataset_x, dataset_y, model, pre_predict_lambda=None):
+        super().__init__(perturbators, coverage_calculators, dataset_x, dataset_y, model,
+                         pre_predict_lambda or self._pre_prediction)
 
     def _save(self, sample, output_path):
         with open(output_path + '.txt', 'w') as txt_out:
@@ -161,12 +150,9 @@ class BasicTextRunner(BasicRunner):
 
 
 class BasicAudioRunner(BasicRunner):
-    def __init__(self, perturbators, coverage_calculators, dataset_x, dataset_y, model):
-        super().__init__(perturbators, coverage_calculators, dataset_x, dataset_y, model)
-
-    def _apply_perturbator(self, input):
-        sample, perturbator = input
-        return perturbator.apply(sample), sample[1]
+    def __init__(self, perturbators, coverage_calculators, dataset_x, dataset_y, model, pre_predict_lambda=None):
+        super().__init__(perturbators, coverage_calculators, dataset_x, dataset_y, model,
+                         pre_predict_lambda or self._pre_prediction)
 
     def _save(self, sample, output_path):
         from scipy.io.wavfile import write
@@ -187,11 +173,12 @@ class BasicAudioRunner(BasicRunner):
 
 
 class ComprehensiveImageRunner(BasicImageRunner):
-    def __init__(self, dataset_x, dataset_y, model, snac_data):
+    def __init__(self, dataset_x, dataset_y, model, snac_data, pre_predict_lambda=None):
+        super().__init__(None, None, dataset_x, dataset_y,
+                         model, pre_predict_lambda)
         self.snac_data = snac_data
-        super().__init__(self._get_all_perturbators(), self._get_all_coverage_calculators(model), dataset_x, dataset_y,
-                         model)
-        del self.snac_data
+        self.perturbators = self._get_all_perturbators()
+        self.coverage_calculators = self._get_all_coverage_calculators(self.model)
 
     def _get_all_perturbators(self):
         return [ImageNoisePerturbator(p=1.0),
@@ -214,15 +201,17 @@ class ComprehensiveImageRunner(BasicImageRunner):
             update_neuron_bounds_op = getattr(calc, "update_neuron_bounds", None)
             if callable(update_neuron_bounds_op):
                 for sample in tqdm(self.snac_data(), desc='Processing SNAC...'):
-                    calc.update_neuron_bounds(self._pre_prediction(sample))
+                    calc.update_neuron_bounds(self.pre_predict_lambda(sample))
         return calcs
 
 
 class ComprehensiveAudioRunner(BasicAudioRunner):
-    def __init__(self, dataset_x, dataset_y, model, snac_data):
+    def __init__(self, dataset_x, dataset_y, model, snac_data, pre_predict_lambda=None):
+        super().__init__(None, None, dataset_x, dataset_y,
+                         model, pre_predict_lambda)
         self.snac_data = snac_data
-        super().__init__(self._get_all_perturbators(), self._get_all_coverage_calculators(model), dataset_x, dataset_y,
-                         model)
+        self.perturbators = self._get_all_perturbators()
+        self.coverage_calculators = self._get_all_coverage_calculators(self.model)
 
     def _get_all_perturbators(self):
         return [AudioBackgroundWhiteNoisePerturbator(p=1.0),
@@ -245,16 +234,18 @@ class ComprehensiveAudioRunner(BasicAudioRunner):
         for calc in calcs:
             update_neuron_bounds_op = getattr(calc, "update_neuron_bounds", None)
             if callable(update_neuron_bounds_op):
-                calc.update_neuron_bounds(
-                    np.concatenate([self._pre_prediction(sample) for sample in self.snac_data()], axis=0))
+                for sample in tqdm(self.snac_data(), desc='Processing SNAC...'):
+                    calc.update_neuron_bounds(self.pre_predict_lambda(sample))
         return calcs
 
 
 class ComprehensiveTextRunner(BasicTextRunner):
-    def __init__(self, dataset_x, dataset_y, model, snac_data):
+    def __init__(self, dataset_x, dataset_y, model, snac_data, pre_predict_lambda=None):
+        super().__init__(None, None, dataset_x, dataset_y,
+                         model, pre_predict_lambda)
         self.snac_data = snac_data
-        super().__init__(self._get_all_perturbators(), self._get_all_coverage_calculators(model), dataset_x, dataset_y,
-                         model)
+        self.perturbators = self._get_all_perturbators()
+        self.coverage_calculators = self._get_all_coverage_calculators(self.model)
 
     def _get_all_perturbators(self):
         return [TextTypoPerturbator(p=1.0),
@@ -274,6 +265,6 @@ class ComprehensiveTextRunner(BasicTextRunner):
         for calc in calcs:
             update_neuron_bounds_op = getattr(calc, "update_neuron_bounds", None)
             if callable(update_neuron_bounds_op):
-                calc.update_neuron_bounds(
-                    np.concatenate([self._pre_prediction(sample) for sample in self.snac_data()], axis=0))
+                for sample in tqdm(self.snac_data(), desc='Processing SNAC...'):
+                    calc.update_neuron_bounds(self.pre_predict_lambda(sample))
         return calcs
