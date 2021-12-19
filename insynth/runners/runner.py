@@ -7,6 +7,7 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 import pandas as pd
+from joblib._multiprocessing_helpers import mp
 from keras import layers
 from sklearn.metrics import classification_report
 from tqdm import tqdm
@@ -60,19 +61,21 @@ class BasicRunner(AbstractRunner):
         for perturbator_index, perturbator in tqdm(enumerate(self.perturbators), desc='Applying Perturbators...'):
             perturbator_name = type(perturbator).__name__
             mutated_coverage_calculators = [copy.copy(calculator) for calculator in self.coverage_calculators]
-            mutated_samples = map(lambda sample: self._apply_perturbator(sample, perturbator), self.dataset_x())
+            with mp.Pool(processes=None) as pool:
+                mutated_samples = pool.imap(perturbator.apply,
+                                           self.dataset_x(), chunksize=100)
 
-            predictions = []
-            for index, mutated_sample in tqdm(enumerate(mutated_samples), desc='Running on Samples...'):
-                if save_mutated_samples:
-                    self._save(mutated_sample, f'{output_path}/{perturbator_name}_{index}')
+                predictions = []
+                for index, mutated_sample in tqdm(enumerate(mutated_samples), desc='Running on Samples...'):
+                    if save_mutated_samples:
+                        self._save(mutated_sample, f'{output_path}/{perturbator_name}_{index}')
 
-                transformed_mutated_sample = self._pre_prediction(mutated_sample)
+                    transformed_mutated_sample = self._pre_prediction(mutated_sample)
 
-                predictions.append(np.argmax(self.model(transformed_mutated_sample, training=False)))
+                    predictions.append(np.argmax(self.model(transformed_mutated_sample, training=False)))
 
-                for calculator in mutated_coverage_calculators:
-                    calculator.update_coverage(transformed_mutated_sample)
+                    for calculator in mutated_coverage_calculators:
+                        calculator.update_coverage(transformed_mutated_sample)
 
             self.put_results_into_dict(results, perturbator_name, self.dataset_y, predictions)
             self.put_coverage_into_dict(results, perturbator_name,
@@ -108,7 +111,7 @@ class BasicRunner(AbstractRunner):
             'micro_prec': results['weighted avg']['precision']}
 
     @abstractmethod
-    def _apply_perturbator(self, samples, perturbator):
+    def _apply_perturbator(self, sample, perturbator):
         raise NotImplementedError()
 
     @abstractmethod
@@ -120,7 +123,8 @@ class BasicRunner(AbstractRunner):
 
 
 class BasicImageRunner(BasicRunner):
-    def _apply_perturbator(self, sample, perturbator):
+    def _apply_perturbator(self, input):
+        sample, perturbator = input
         return perturbator.apply(sample)
 
     def _save(self, sample, output_path):
@@ -131,7 +135,8 @@ class BasicImageRunner(BasicRunner):
 
 
 class BasicTextRunner(BasicRunner):
-    def _apply_perturbator(self, sample, perturbator):
+    def _apply_perturbator(self, input):
+        sample, perturbator = input
         return perturbator.apply(sample)
 
     def _save(self, sample, output_path):
@@ -160,7 +165,8 @@ class BasicAudioRunner(BasicRunner):
     def __init__(self, perturbators, coverage_calculators, dataset_x, dataset_y, model):
         super().__init__(perturbators, coverage_calculators, dataset_x, dataset_y, model)
 
-    def _apply_perturbator(self, sample, perturbator):
+    def _apply_perturbator(self, input):
+        sample, perturbator = input
         return perturbator.apply(sample), sample[1]
 
     def _save(self, sample, output_path):

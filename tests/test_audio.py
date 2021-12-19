@@ -20,7 +20,7 @@ class TestAudio(unittest.TestCase):
                                                            noise_prob=type('', (object,), {'rvs': lambda _: 1.0})(),
                                                            noise_prob_args={})
 
-        output_signal = perturbator.apply((input_signal, 44100))
+        output_signal,sample_rate = perturbator.apply((input_signal, 44100))
 
         # assert arrays are not equal
         np.testing.assert_raises(AssertionError, np.testing.assert_array_equal, input_signal, output_signal)
@@ -30,7 +30,7 @@ class TestAudio(unittest.TestCase):
         perturbator = AudioBackgroundWhiteNoisePerturbator(p=1.0,
                                                            noise_prob=type('', (object,), {'rvs': lambda _: 0.0})(),
                                                            noise_prob_args={})
-        output_signal = perturbator.apply((input_signal, 44100))
+        output_signal,sample_rate = perturbator.apply((input_signal, 44100))
 
         np.testing.assert_array_equal(input_signal, output_signal)
 
@@ -39,7 +39,7 @@ class TestAudio(unittest.TestCase):
         perturbator = AudioPitchPerturbator(p=1.0,
                                             pitch_prob=type('', (object,), {'rvs': lambda _: 12})(),
                                             pitch_prob_args={})
-        output_signal = perturbator.apply((input_signal, 44100))
+        output_signal,sample_rate = perturbator.apply((input_signal, 44100))
 
         np.testing.assert_raises(AssertionError, np.testing.assert_array_equal, input_signal, output_signal)
 
@@ -48,7 +48,7 @@ class TestAudio(unittest.TestCase):
         perturbator = AudioPitchPerturbator(p=1.0,
                                             pitch_prob=type('', (object,), {'rvs': lambda _: 0})(),
                                             pitch_prob_args={})
-        output_signal = perturbator.apply((input_signal, 44100))
+        output_signal,sample_rate = perturbator.apply((input_signal, 44100))
 
         np.testing.assert_array_almost_equal(input_signal, output_signal, 1)
 
@@ -57,7 +57,7 @@ class TestAudio(unittest.TestCase):
         perturbator = AudioClippingPerturbator(p=1.0,
                                                clipping_prob=type('', (object,), {'rvs': lambda _: 50})(),
                                                clipping_prob_args={})
-        output_signal = perturbator.apply((input_signal, 44100))
+        output_signal,sample_rate = perturbator.apply((input_signal, 44100))
 
         np.testing.assert_raises(AssertionError, np.testing.assert_array_equal, input_signal, output_signal)
 
@@ -66,7 +66,7 @@ class TestAudio(unittest.TestCase):
         perturbator = AudioClippingPerturbator(p=1.0,
                                                clipping_prob=type('', (object,), {'rvs': lambda _: 0})(),
                                                clipping_prob_args={})
-        output_signal = perturbator.apply((input_signal, 44100))
+        output_signal,sample_rate = perturbator.apply((input_signal, 44100))
 
         np.testing.assert_array_almost_equal(input_signal, output_signal, 1)
 
@@ -75,7 +75,7 @@ class TestAudio(unittest.TestCase):
         perturbator = AudioVolumePerturbator(p=1.0,
                                              volume_prob=type('', (object,), {'rvs': lambda _: 10})(),
                                              volume_prob_args={})
-        output_signal = perturbator.apply((input_signal, 44100))
+        output_signal,sample_rate = perturbator.apply((input_signal, 44100))
 
         np.testing.assert_raises(AssertionError, np.testing.assert_array_equal, input_signal, output_signal)
 
@@ -84,7 +84,7 @@ class TestAudio(unittest.TestCase):
         perturbator = AudioVolumePerturbator(p=1.0,
                                              volume_prob=type('', (object,), {'rvs': lambda _: 0})(),
                                              volume_prob_args={})
-        output_signal = perturbator.apply((input_signal, 44100))
+        output_signal,sample_rate = perturbator.apply((input_signal, 44100))
 
         np.testing.assert_array_almost_equal(input_signal, output_signal, 4)
 
@@ -93,7 +93,7 @@ class TestAudio(unittest.TestCase):
         perturbator = AudioEchoPerturbator(p=1.0,
                                            echo_prob=type('', (object,), {'rvs': lambda _: 1.0})(),
                                            echo_prob_args={})
-        output_signal = perturbator.apply((input_signal, 44100))
+        output_signal,sample_rate = perturbator.apply((input_signal, 44100))
 
         np.testing.assert_raises(AssertionError, np.testing.assert_array_equal, input_signal, output_signal)
 
@@ -102,28 +102,28 @@ class TestAudio(unittest.TestCase):
         perturbator = AudioEchoPerturbator(p=1.0,
                                            echo_prob=type('', (object,), {'rvs': lambda _: 0.0})(),
                                            echo_prob_args={})
-        output_signal = perturbator.apply((input_signal, 44100))
+        output_signal,sample_rate = perturbator.apply((input_signal, 44100))
 
         np.testing.assert_array_equal(output_signal, input_signal * 2)
 
     def test_AudioBackgroundNoisePerturbator_with_noise(self):
         input_signal = self._generate_random_audio()
         perturbator = AudioBackgroundNoisePerturbator(p=1.0, noise_types=[''])
-        output_signal = perturbator.apply((input_signal, 44100))
+        output_signal,sample_rate = perturbator.apply((input_signal, 44100))
 
         np.testing.assert_raises(AssertionError, np.testing.assert_array_equal, input_signal, output_signal)
 
     def test_AudioShortNoisePerturbator_with_noise(self):
         input_signal = self._generate_random_audio()
         perturbator = AudioShortNoisePerturbator(p=1.0, noise_types=[''])
-        output_signal = perturbator.apply((input_signal, 44100))
+        output_signal,sample_rate = perturbator.apply((input_signal, 44100))
 
         np.testing.assert_raises(AssertionError, np.testing.assert_array_equal, input_signal, output_signal)
 
     def test_AudioImpulseResponsePerturbator_with_noise(self):
         input_signal = self._generate_random_audio()
         perturbator = AudioImpulseResponsePerturbator(p=1.0, impulse_types=[''])
-        output_signal = perturbator.apply((input_signal, 44100))
+        output_signal,sample_rate = perturbator.apply((input_signal, 44100))
 
         np.testing.assert_raises(AssertionError, np.testing.assert_array_equal, input_signal, output_signal)
 

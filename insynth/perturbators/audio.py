@@ -26,7 +26,7 @@ class AudioBackgroundWhiteNoisePerturbator(BlackboxAudioPerturbator):
         RMS = math.sqrt(np.mean(signal ** 2))
         noise = np.random.normal(0, RMS * noise_level, signal.shape[0])
         signal_noise = signal + noise
-        return signal_noise
+        return signal_noise, sample_rate
 
 
 
@@ -46,7 +46,7 @@ class AudioCompressionPerturbator(BlackboxAudioPerturbator):
 
         op = Mp3Compression(p=1.0, min_bitrate=compression_rate,
                             max_bitrate=compression_rate, backend='lameenc')
-        return op(signal, sample_rate)
+        return op(signal, sample_rate), sample_rate
 
 
 class AudioPitchPerturbator(BlackboxAudioPerturbator):
@@ -63,7 +63,7 @@ class AudioPitchPerturbator(BlackboxAudioPerturbator):
 
         op = PitchShift(p=1.0, min_semitones=pitch_shift,
                         max_semitones=pitch_shift)
-        return op(signal, sample_rate)
+        return op(signal, sample_rate), sample_rate
 
 
 class AudioClippingPerturbator(BlackboxAudioPerturbator):
@@ -80,7 +80,7 @@ class AudioClippingPerturbator(BlackboxAudioPerturbator):
 
         op = ClippingDistortion(
             p=1.0, min_percentile_threshold=clipping_percentile, max_percentile_threshold=clipping_percentile)
-        return op(signal, sample_rate)
+        return op(signal, sample_rate), sample_rate
 
 
 class AudioVolumePerturbator(BlackboxAudioPerturbator):
@@ -97,7 +97,7 @@ class AudioVolumePerturbator(BlackboxAudioPerturbator):
 
         op = Gain(p=1.0, min_gain_in_db=volume_shift,
                   max_gain_in_db=volume_shift)
-        return op(signal, sample_rate)
+        return op(signal, sample_rate), sample_rate
 
 
 class AudioEchoPerturbator(BlackboxAudioPerturbator):
@@ -118,7 +118,7 @@ class AudioEchoPerturbator(BlackboxAudioPerturbator):
         for count, e in enumerate(signal):
             output_audio[count] = e + signal[count - int(output_delay)]
 
-        return output_audio
+        return output_audio, sample_rate
 
 
 class AudioShortNoisePerturbator(BlackboxAudioPerturbator):
@@ -141,7 +141,7 @@ class AudioShortNoisePerturbator(BlackboxAudioPerturbator):
         op = AddShortNoises(
             sounds_path='data/audio/background_noise/', p=1.0)
         op.sound_file_paths = self.sound_file_paths  # overwrite files to sample from
-        return op(signal, sample_rate=sample_rate)
+        return op(signal, sample_rate=sample_rate), sample_rate
 
 
 class AudioBackgroundNoisePerturbator(BlackboxAudioPerturbator):
@@ -164,7 +164,7 @@ class AudioBackgroundNoisePerturbator(BlackboxAudioPerturbator):
         op = AddBackgroundNoise(
             sounds_path='data/audio/background_noise/', p=self.p)
         op.sound_file_paths = self.sound_file_paths
-        return op(signal, sample_rate=sample_rate)
+        return op(signal, sample_rate=sample_rate), sample_rate
 
 
 class AudioImpulseResponsePerturbator(BlackboxAudioPerturbator):
@@ -188,4 +188,4 @@ class AudioImpulseResponsePerturbator(BlackboxAudioPerturbator):
         op = ApplyImpulseResponse(
             ir_path='data/audio/pulse_response/', p=self.p)
         op.ir_files = self.ir_files
-        return op(signal, sample_rate)
+        return op(signal, sample_rate), sample_rate

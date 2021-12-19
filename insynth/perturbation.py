@@ -1,7 +1,5 @@
-from abc import ABC, abstractmethod
 import random
-
-import numpy as np
+from abc import ABC, abstractmethod
 
 from insynth.metrics.coverage.neuron import NeuronCoverageCalculator, StrongNeuronActivationCoverageCalculator, \
     NeuronBoundaryCoverageCalculator, KMultiSectionNeuronCoverageCalculator, TopKNeuronCoverageCalculator, \
@@ -37,7 +35,7 @@ class BlackboxAudioPerturbator(AbstractBlackboxPerturbator):
 
     def apply(self, original_input):
         if random.random() > self.p:
-            return original_input[1]
+            return original_input
         return self._internal_apply(original_input)
 
     @abstractmethod
@@ -98,4 +96,3 @@ COVERAGE_CRITERIA_TO_CALCULATOR_CLASS = {
     'TKNC': TopKNeuronCoverageCalculator,
     'TKPC': TopKNeuronPatternsCalculator
 }
-
