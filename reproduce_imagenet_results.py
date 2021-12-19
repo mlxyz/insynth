@@ -14,7 +14,7 @@ def ds_generator(ds, size):
                     ds)
 
 
-ds = tfds.load('imagenet_v2', split='test', shuffle_files=False).shuffle(1000)
+ds = tfds.load('imagenet_v2', split='test', shuffle_files=False)
 
 snac_dataset = ds.take(2000)
 test_dataset = ds.skip(2000)
