@@ -47,7 +47,7 @@ class BasicRunner(AbstractRunner):
         logging.info('Processing original dataset...')
         for sample in tqdm(self.dataset_x(), desc='Processing Original Dataset...'):
             transformed_sample = self._pre_prediction(sample)
-            y_pred.append(np.argmax(self.model.predict(transformed_sample, verbose=0)))
+            y_pred.append(np.argmax(self.model(transformed_sample, training=False)))
             for coverage_calculator in self.coverage_calculators:
                 coverage_calculator.update_coverage(transformed_sample)
 
@@ -69,7 +69,7 @@ class BasicRunner(AbstractRunner):
 
                 transformed_mutated_sample = self._pre_prediction(mutated_sample)
 
-                predictions.append(np.argmax(self.model.predict(transformed_mutated_sample, verbose=0)))
+                predictions.append(np.argmax(self.model(transformed_mutated_sample, training=False)))
 
                 for calculator in mutated_coverage_calculators:
                     calculator.update_coverage(transformed_mutated_sample)

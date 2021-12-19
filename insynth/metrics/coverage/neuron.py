@@ -28,7 +28,7 @@ def get_model_activations(model, input_data):
     intermediate_layer_model = keras.models.Model(inputs=model.input,
                                                   outputs=[layer.output for layer in
                                                            layers])
-    intermediate_layer_outputs = intermediate_layer_model.predict(input_data, verbose=0)
+    intermediate_layer_outputs = [tensor.numpy() for tensor in intermediate_layer_model(input_data, training=False)]
     return intermediate_layer_outputs
 
 
