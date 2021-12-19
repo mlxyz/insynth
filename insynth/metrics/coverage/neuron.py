@@ -58,7 +58,6 @@ def merge_dicts(dict_1, dict_2):
 class NeuronCoverageCalculator(AbstractCoverageCalculator):
     def __copy__(self):
         self_copy = NeuronCoverageCalculator(self.model, self.activation_threshold)
-        self_copy._layers_with_neurons = deepcopy(self._layers_with_neurons)
         self_copy.coverage_dict = deepcopy(self.coverage_dict)
         return self_copy
 
@@ -90,7 +89,6 @@ class NeuronCoverageCalculator(AbstractCoverageCalculator):
 class StrongNeuronActivationCoverageCalculator(AbstractCoverageCalculator):
     def __copy__(self):
         self_copy = StrongNeuronActivationCoverageCalculator(self.model)
-        self_copy._layers_with_neurons = deepcopy(self._layers_with_neurons)
         self_copy.coverage_dict = deepcopy(self.coverage_dict)
         self_copy.upper_neuron_bounds_dict = deepcopy(self.upper_neuron_bounds_dict)
         self_copy.lower_neuron_bounds_dict = deepcopy(self.lower_neuron_bounds_dict)
@@ -143,7 +141,6 @@ class StrongNeuronActivationCoverageCalculator(AbstractCoverageCalculator):
 class KMultiSectionNeuronCoverageCalculator(StrongNeuronActivationCoverageCalculator):
     def __copy__(self):
         self_copy = KMultiSectionNeuronCoverageCalculator(self.model, self.k)
-        self_copy._layers_with_neurons = deepcopy(self._layers_with_neurons)
         self_copy.coverage_dict = deepcopy(self.coverage_dict)
         self_copy.upper_neuron_bounds_dict = deepcopy(self.upper_neuron_bounds_dict)
         self_copy.lower_neuron_bounds_dict = deepcopy(self.lower_neuron_bounds_dict)
@@ -207,7 +204,6 @@ class KMultiSectionNeuronCoverageCalculator(StrongNeuronActivationCoverageCalcul
 class NeuronBoundaryCoverageCalculator(StrongNeuronActivationCoverageCalculator):
     def __copy__(self):
         self_copy = NeuronBoundaryCoverageCalculator(self.model)
-        self_copy._layers_with_neurons = deepcopy(self._layers_with_neurons)
         self_copy.coverage_dict = deepcopy(self.coverage_dict)
         self_copy.upper_neuron_bounds_dict = deepcopy(self.upper_neuron_bounds_dict)
         self_copy.lower_neuron_bounds_dict = deepcopy(self.lower_neuron_bounds_dict)
@@ -267,21 +263,8 @@ class NeuronBoundaryCoverageCalculator(StrongNeuronActivationCoverageCalculator)
 class TopKNeuronCoverageCalculator(AbstractCoverageCalculator):
     def __copy__(self):
         self_copy = TopKNeuronCoverageCalculator(self.model, self.k)
-        self_copy._layers_with_neurons = deepcopy(self._layers_with_neurons)
         self_copy.coverage_dict = deepcopy(self.coverage_dict)
-        self.k = deepcopy(self.k)
         return self_copy
-
-    def get_random_uncovered_neuron(self):
-        uncovered_neurons = []
-        for layer in get_layers_with_neurons(self.model):
-            for neuron_index in range(num_neurons(layer.output_shape)):
-                if neuron_index not in self.coverage_dict[layer.name]:
-                    uncovered_neurons.append((layer.name, neuron_index))
-        if uncovered_neurons:
-            return random.choice(uncovered_neurons)
-        else:
-            return None
 
     def __init__(self, model, k=3):
         super().__init__(model)
@@ -325,13 +308,8 @@ class TopKNeuronPatternsCalculator(AbstractCoverageCalculator):
 
     def __copy__(self):
         self_copy = TopKNeuronPatternsCalculator(self.model, self.k)
-        self_copy._layers_with_neurons = deepcopy(self._layers_with_neurons)
         self_copy.coverage_dict = deepcopy(self.coverage_dict)
-        self.k = deepcopy(self.k)
         return self_copy
-
-    def get_random_uncovered_neuron(self):
-        raise NotImplementedError
 
     def __init__(self, model, k=3):
         super().__init__(model)
