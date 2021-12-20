@@ -1,47 +1,14 @@
-import random
 from copy import deepcopy
 
 import numpy as np
 
-from insynth.metrics.coverage.coverage_calculator import AbstractCoverageCalculator
-
-
-def num_neurons(shape):
-    return np.prod([dim for dim in shape if dim is not None])
-
-
-def _init_dict(model, initial_value) -> dict:
-    coverage_dict = {}
-    for layer in get_layers_with_neurons(model):
-        coverage_dict[layer.name] = np.full((num_neurons(layer.output_shape)), initial_value)
-    return coverage_dict
-
-
-def get_layers_with_neurons(model):
-    return [layer for layer in model.layers if
-            'flatten' not in layer.name and 'input' not in layer.name and 'embedding' not in layer.name and 'dropout' not in layer.name]
-
-
-def get_model_activations(model, input_data):
-    from tensorflow import keras
-    layers = get_layers_with_neurons(model)
-    intermediate_layer_model = keras.models.Model(inputs=model.input,
-                                                  outputs=[layer.output for layer in
-                                                           layers])
-    intermediate_layer_outputs = [tensor.numpy() for tensor in intermediate_layer_model(input_data, training=False)]
-    return intermediate_layer_outputs
+from insynth.metrics.coverage.coverage_calculator import AbstractCoverageCalculator, num_neurons
 
 
 def neurons_covered(coverage_dict):
     covered_neurons = sum(arr.sum() for arr in coverage_dict.values())
     total_neurons = sum(len(arr) for arr in coverage_dict.values())
     return covered_neurons, total_neurons, covered_neurons / float(total_neurons)
-
-
-def iterate_over_layer_activations(model, layers, input_data):
-    layer_names = [layer.name for layer in layers]
-    intermediate_layer_activations = get_model_activations(model, input_data)
-    return zip(layer_names, map(lambda x: x[0], intermediate_layer_activations))
 
 
 def merge_np_arrays(arr1, arr2):
@@ -63,13 +30,12 @@ class NeuronCoverageCalculator(AbstractCoverageCalculator):
 
     def __init__(self, model, activation_threshold=0):
         super().__init__(model)
-        self._layers_with_neurons = get_layers_with_neurons(self.model)
+
         self.activation_threshold = activation_threshold
-        self.coverage_dict = _init_dict(model, False)
+        self.coverage_dict = self._init_plain_coverage_dict(False)
 
     def update_coverage(self, input_data):
-        for layer_name, layer_activations in iterate_over_layer_activations(self.model, self._layers_with_neurons,
-                                                                            input_data):
+        for layer_name, layer_activations in self.iterate_over_layer_activations(input_data):
             layer_coverage_arr = self.coverage_dict[layer_name]
             layer_activations = layer_activations.flatten()
             layer_coverage_arr[layer_activations > self.activation_threshold] = True
@@ -96,14 +62,12 @@ class StrongNeuronActivationCoverageCalculator(AbstractCoverageCalculator):
 
     def __init__(self, model):
         super().__init__(model)
-        self._layers_with_neurons = get_layers_with_neurons(self.model)
-        self.coverage_dict = _init_dict(model, False)
-        self.upper_neuron_bounds_dict = _init_dict(model, np.NAN)
-        self.lower_neuron_bounds_dict = _init_dict(model, np.NAN)
+        self.coverage_dict = self._init_plain_coverage_dict(False)
+        self.upper_neuron_bounds_dict = self._init_plain_coverage_dict(np.NAN)
+        self.lower_neuron_bounds_dict = self._init_plain_coverage_dict(np.NAN)
 
-    def update_neuron_bounds(self, input_data):
-        for layer_name, layer_activations in iterate_over_layer_activations(self.model, self._layers_with_neurons,
-                                                                            input_data):
+    def update_neuron_bounds(self, input_batch):
+        for layer_name, layer_activations in self.iterate_over_layer_activations(input_batch):
             upper_neuron_bounds_dict = self.upper_neuron_bounds_dict[layer_name]
             lower_neuron_bounds_dict = self.lower_neuron_bounds_dict[layer_name]
             layer_activations = layer_activations.flatten()
@@ -119,8 +83,7 @@ class StrongNeuronActivationCoverageCalculator(AbstractCoverageCalculator):
                     (layer_activations < lower_neuron_bounds_dict) | np.isnan(lower_neuron_bounds_dict)]
 
     def update_coverage(self, input_data):
-        for layer_name, layer_activations in iterate_over_layer_activations(self.model, self._layers_with_neurons,
-                                                                            input_data):
+        for layer_name, layer_activations in self.iterate_over_layer_activations(input_data):
             layer_coverage_dict = self.coverage_dict[layer_name]
             upper_neuron_bounds_dict = self.upper_neuron_bounds_dict[layer_name]
             layer_activations = layer_activations.flatten()
@@ -149,14 +112,12 @@ class KMultiSectionNeuronCoverageCalculator(StrongNeuronActivationCoverageCalcul
     def __init__(self, model, k=3):
         super().__init__(model)
         self.k = k
-        self._layers_with_neurons = get_layers_with_neurons(self.model)
-        self.upper_neuron_bounds_dict = _init_dict(model, np.NAN)
-        self.lower_neuron_bounds_dict = _init_dict(model, np.NAN)
+        self.upper_neuron_bounds_dict = self._init_plain_coverage_dict(np.NAN)
+        self.lower_neuron_bounds_dict = self._init_plain_coverage_dict(np.NAN)
         self.coverage_dict = self._init_dict(model)
 
     def update_coverage(self, input_data):
-        for layer_name, layer_activations in iterate_over_layer_activations(self.model, self._layers_with_neurons,
-                                                                            input_data):
+        for layer_name, layer_activations in self.iterate_over_layer_activations(input_data):
             layer_coverage_dict = self.coverage_dict[layer_name]
             upper_neuron_bounds_arr = self.upper_neuron_bounds_dict[layer_name]
             lower_neuron_bounds_arr = self.lower_neuron_bounds_dict[layer_name]
@@ -170,9 +131,9 @@ class KMultiSectionNeuronCoverageCalculator(StrongNeuronActivationCoverageCalcul
 
     def _init_dict(self, model):
         coverage_dict = {}
-        for layer in get_layers_with_neurons(model):
+        for layer in self.layers_with_neurons:
             layer_name = layer.name
-            coverage_dict[layer_name] = np.full((num_neurons(layer.output_shape), self.k), False)
+            coverage_dict[layer_name] = np.full((num_neurons(layer), self.k), False)
         return coverage_dict
 
     def neurons_covered(self):
@@ -211,14 +172,13 @@ class NeuronBoundaryCoverageCalculator(StrongNeuronActivationCoverageCalculator)
 
     def __init__(self, model):
         super().__init__(model)
-        self._layers_with_neurons = get_layers_with_neurons(self.model)
         self.coverage_dict = self._init_dict(model)
-        self.upper_neuron_bounds_dict = _init_dict(model, np.NAN)
-        self.lower_neuron_bounds_dict = _init_dict(model, np.NAN)
+        self.upper_neuron_bounds_dict = self._init_plain_coverage_dict(np.NAN)
+        self.lower_neuron_bounds_dict = self._init_plain_coverage_dict(np.NAN)
 
     def update_coverage(self, input_data):
-        for layer_name, layer_activations in iterate_over_layer_activations(self.model, self._layers_with_neurons,
-                                                                            input_data):
+        for layer_name, layer_activations in self.iterate_over_layer_activations(
+                input_data):
             layer_coverage_dict = self.coverage_dict[layer_name]
             upper_neuron_bounds_arr = self.upper_neuron_bounds_dict[layer_name]
             lower_neuron_bounds_arr = self.lower_neuron_bounds_dict[layer_name]
@@ -251,9 +211,9 @@ class NeuronBoundaryCoverageCalculator(StrongNeuronActivationCoverageCalculator)
 
     def _init_dict(self, model):
         coverage_dict = {}
-        for layer in get_layers_with_neurons(model):
+        for layer in self.layers_with_neurons:
             layer_name = layer.name
-            coverage_dict[layer_name] = np.full((num_neurons(layer.output_shape), 2), False)
+            coverage_dict[layer_name] = np.full((num_neurons(layer), 2), False)
         return coverage_dict
 
     def merge(self, other_calculator):
@@ -268,13 +228,12 @@ class TopKNeuronCoverageCalculator(AbstractCoverageCalculator):
 
     def __init__(self, model, k=3):
         super().__init__(model)
-        self._layers_with_neurons = get_layers_with_neurons(self.model)
         self.coverage_dict = self._init_dict(model)
         self.k = k
 
     def _init_dict(self, model) -> dict:
         coverage_dict = {}
-        for layer in get_layers_with_neurons(model):
+        for layer in self.layers_with_neurons:
             coverage_dict[layer.name] = set()
         return coverage_dict
 
@@ -284,8 +243,8 @@ class TopKNeuronCoverageCalculator(AbstractCoverageCalculator):
 
     def update_coverage(self, input_data):
 
-        for layer_name, layer_activations in iterate_over_layer_activations(self.model, self._layers_with_neurons,
-                                                                            input_data):
+        for layer_name, layer_activations in self.iterate_over_layer_activations(
+                input_data):
             coverage_dict = self.coverage_dict[layer_name]
             layer_activations = layer_activations.flatten()
             k = min(len(layer_activations), self.k)
@@ -294,7 +253,7 @@ class TopKNeuronCoverageCalculator(AbstractCoverageCalculator):
 
     def get_coverage(self) -> dict:
         top_k_neurons = sum(len(layer) for layer in self.coverage_dict.values())
-        total_neurons = sum(num_neurons(layer.output_shape) for layer in get_layers_with_neurons(self.model))
+        total_neurons = sum(num_neurons(layer) for layer in self.layers_with_neurons)
         return {
             'total_neurons': total_neurons,
             'top_k_neurons': top_k_neurons,
@@ -314,7 +273,6 @@ class TopKNeuronPatternsCalculator(AbstractCoverageCalculator):
     def __init__(self, model, k=3):
         super().__init__(model)
         self.k = k
-        self._layers_with_neurons = get_layers_with_neurons(self.model)
         self.coverage_dict = self._init_dict()
 
     def _init_dict(self) -> set:
@@ -324,8 +282,8 @@ class TopKNeuronPatternsCalculator(AbstractCoverageCalculator):
     def update_coverage(self, input_data):
         pattern = []
 
-        for layer_name, layer_activations in iterate_over_layer_activations(self.model, self._layers_with_neurons,
-                                                                            input_data):
+        for layer_name, layer_activations in self.iterate_over_layer_activations(
+                input_data):
             layer_activations = layer_activations.flatten()
             top_k_indices = (-layer_activations).argsort()[:self.k]
             pattern.extend(map(lambda index: layer_name + '_' + str(index), top_k_indices))
