@@ -1,13 +1,12 @@
 import logging
 import os
-from pathlib import Path
 
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 
 from insynth.runners.runner import ComprehensiveAudioRunner
-
+np.seterr(divide='ignore', invalid='ignore')
 logging.basicConfig(level=logging.INFO)
 DATASET_ROOT = os.path.join("data/speaker_recognition/16000_pcm_speeches")
 
@@ -23,6 +22,9 @@ SAMPLING_RATE = 16000
 
 BATCH_SIZE = 128
 EPOCHS = 100
+
+class_names = os.listdir(DATASET_AUDIO_PATH)
+print("Our class names: {}".format(class_names, ))
 
 
 def paths_and_labels_to_dataset(audio_paths, labels):
@@ -62,45 +64,6 @@ def audio_to_fft(audio):
 
 # Get the list of audio file paths along with their corresponding labels
 
-class_names = os.listdir(DATASET_AUDIO_PATH)
-print("Our class names: {}".format(class_names, ))
-
-audio_paths = []
-labels = []
-for label, name in enumerate(class_names):
-    print("Processing speaker {}".format(name, ))
-    dir_path = Path(DATASET_AUDIO_PATH) / name
-    speaker_sample_paths = [
-        os.path.join(dir_path, filepath)
-        for filepath in os.listdir(dir_path)
-        if filepath.endswith(".wav")
-    ]
-    audio_paths += speaker_sample_paths
-    labels += [label] * len(speaker_sample_paths)
-
-print(
-    "Found {} files belonging to {} classes.".format(len(audio_paths), len(class_names))
-)
-
-# Shuffle
-rng = np.random.RandomState(SHUFFLE_SEED)
-rng.shuffle(audio_paths)
-rng = np.random.RandomState(SHUFFLE_SEED)
-rng.shuffle(labels)
-
-# Split into training and validation
-num_val_samples = int(VALID_SPLIT * len(audio_paths))
-print("Using {} files for training.".format(len(audio_paths) - num_val_samples))
-train_audio_paths = audio_paths[:-num_val_samples]
-train_labels = labels[:-num_val_samples]
-
-print("Using {} files for validation.".format(num_val_samples))
-valid_audio_paths = audio_paths[-num_val_samples:]
-valid_labels = labels[-num_val_samples:]
-
-# Create 2 datasets, one for training and the other for validation
-
-
 with open('data/speaker_recognition/train_paths.txt', 'r') as f:
     train_audio_paths = f.read().splitlines()
 with open('data/speaker_recognition/train_labels.txt', 'r') as f:
@@ -111,20 +74,10 @@ with open('data/speaker_recognition/valid_labels.txt', 'r') as f:
     valid_labels = list(map(int, f.read().splitlines()))
 
 train_ds = paths_and_labels_to_dataset(train_audio_paths, train_labels)
-#train_ds = train_ds.shuffle(buffer_size=BATCH_SIZE * 8, seed=SHUFFLE_SEED)
 
 valid_ds = paths_and_labels_to_dataset(valid_audio_paths, valid_labels)
-#valid_ds = valid_ds.shuffle(buffer_size=BATCH_SIZE * 8, seed=SHUFFLE_SEED)
-
-# Transform audio wave to the frequency domain using `audio_to_fft`
-# train_ds = train_ds.map(
-#    lambda x, y: (audio_to_fft(x), y), num_parallel_calls=tf.data.AUTOTUNE
-# )
 train_ds = train_ds.prefetch(tf.data.AUTOTUNE)
 
-# valid_ds = valid_ds.map(
-#    lambda x, y: (audio_to_fft(x), y), num_parallel_calls=tf.data.AUTOTUNE
-# )
 valid_ds = valid_ds.prefetch(tf.data.AUTOTUNE)
 
 
@@ -166,7 +119,7 @@ model.compile(
 model.load_weights('data/speaker_recognition/model_weights.h5')
 
 x_test_data_generator = lambda: ((np.squeeze(sample[0][0]), sample[0][1].numpy()) for sample in valid_ds)
-x_snac_data_generator = lambda: ((np.squeeze(sample[0][0]), sample[0][1].numpy()) for sample in train_ds.take(10))
+x_snac_data_generator = lambda: ((np.squeeze(sample[0][0]), sample[0][1].numpy()) for sample in train_ds)
 
 print(valid_labels)
 
