@@ -45,7 +45,7 @@ class AudioCompressionPerturbator(BlackboxAudioPerturbator):
             Mp3Compression.SUPPORTED_BITRATES, key=lambda x: abs(x - compression_rate))
 
         op = Mp3Compression(p=1.0, min_bitrate=compression_rate,
-                            max_bitrate=compression_rate, backend='lameenc')
+                            max_bitrate=compression_rate, backend='pydub')
         return op(signal, sample_rate), sample_rate
 
 

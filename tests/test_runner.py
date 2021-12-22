@@ -14,6 +14,7 @@ from tensorflow.keras import layers
 
 from insynth.data import utils
 from insynth.metrics.coverage.neuron import NeuronCoverageCalculator
+from insynth.perturbators.audio import AudioCompressionPerturbator
 from insynth.perturbators.image import ImageBrightnessPerturbator, ImageContrastPerturbator, ImageOcclusionPerturbator, \
     ImageCompressionPerturbator
 from insynth.runners.runner import ComprehensiveImageRunner, BasicImageRunner, ComprehensiveAudioRunner, \
@@ -135,8 +136,8 @@ class TestRunner(unittest.TestCase):
         runner = ComprehensiveAudioRunner(
             data_generator, y_test,
             model, data_generator)
-        runner.coverage_calculators = []
-
+        runner.perturbators = [AudioCompressionPerturbator(p=1.0)]
+        runner.coverage_calculators=[]
         report, robustness = runner.run(save_mutated_samples=False)
         print(report)
         assert len(report.columns) == 7

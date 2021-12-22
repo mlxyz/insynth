@@ -45,7 +45,6 @@ class BasicRunner(AbstractRunner):
         results = {}
 
         y_pred = []
-        logging.info('Processing original dataset...')
         for sample in tqdm(self.dataset_x(), desc='Processing Original Dataset...'):
             transformed_sample = self.pre_predict_lambda(sample)
             y_pred.append(np.argmax(self.model(transformed_sample, training=False)))
@@ -60,7 +59,7 @@ class BasicRunner(AbstractRunner):
         logging.info('Processing mutated dataset...')
         for perturbator_index, perturbator in tqdm(enumerate(self.perturbators), desc='Applying Perturbators...'):
             perturbator_name = type(perturbator).__name__
-            logging.info(f'Perturbator: {perturbator_name}')
+            logging.info(f'Working on Perturbator: {perturbator_name}')
             mutated_coverage_calculators = [copy.copy(calculator) for calculator in self.coverage_calculators]
             mutated_samples = map(perturbator.apply,
                                   self.dataset_x())

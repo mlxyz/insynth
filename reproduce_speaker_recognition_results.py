@@ -6,6 +6,7 @@ import tensorflow as tf
 from tensorflow import keras
 
 from insynth.runners.runner import ComprehensiveAudioRunner
+# download and extract https://insynth-data.s3.eu-central-1.amazonaws.com/speaker_recognition_experiment.zip to data/
 np.seterr(divide='ignore', invalid='ignore')
 logging.basicConfig(level=logging.INFO)
 DATASET_ROOT = os.path.join("data/speaker_recognition/16000_pcm_speeches")
@@ -137,3 +138,6 @@ report, robustness = runner.run()
 
 print(report.to_string())
 print(robustness)
+
+os.makedirs('output/speaker_recognition/')
+report.to_csv('output/speaker_recognition/report.csv')
