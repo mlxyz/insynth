@@ -12,7 +12,8 @@ from sklearn.metrics import classification_report
 from tqdm import tqdm
 
 from insynth.metrics.coverage.neuron import StrongNeuronActivationCoverageCalculator, \
-    KMultiSectionNeuronCoverageCalculator, NeuronCoverageCalculator
+    KMultiSectionNeuronCoverageCalculator, NeuronCoverageCalculator, NeuronBoundaryCoverageCalculator, \
+    TopKNeuronCoverageCalculator, TopKNeuronPatternsCalculator
 from insynth.perturbators.audio import AudioBackgroundWhiteNoisePerturbator, AudioPitchPerturbator, \
     AudioClippingPerturbator, AudioVolumePerturbator, AudioEchoPerturbator, \
     AudioShortNoisePerturbator, AudioBackgroundNoisePerturbator, AudioImpulseResponsePerturbator
@@ -59,6 +60,7 @@ class BasicRunner(AbstractRunner):
         logging.info('Processing mutated dataset...')
         for perturbator_index, perturbator in tqdm(enumerate(self.perturbators), desc='Applying Perturbators...'):
             perturbator_name = type(perturbator).__name__
+            logging.info(f'Perturbator: {perturbator_name}')
             mutated_coverage_calculators = [copy.copy(calculator) for calculator in self.coverage_calculators]
             mutated_samples = map(perturbator.apply,
                                   self.dataset_x())
@@ -229,7 +231,10 @@ class ComprehensiveAudioRunner(BasicAudioRunner):
         calcs = [
             NeuronCoverageCalculator(model),
             StrongNeuronActivationCoverageCalculator(model),
-            KMultiSectionNeuronCoverageCalculator(model)
+            KMultiSectionNeuronCoverageCalculator(model),
+            NeuronBoundaryCoverageCalculator(model),
+            TopKNeuronCoverageCalculator(model),
+            TopKNeuronPatternsCalculator(model)
         ]
         for calc in calcs:
             update_neuron_bounds_op = getattr(calc, "update_neuron_bounds", None)
