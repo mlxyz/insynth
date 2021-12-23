@@ -115,7 +115,7 @@ class TestRunner(unittest.TestCase):
                                not isinstance(perturbator, ImageCompressionPerturbator)]
         report, robustness = runner.run(save_incorrect_mutated_samples=False)
         print(report.to_string())
-        assert len(report.columns) == 10
+        assert len(report.columns) == 13
         assert report.isna().sum().sum() == 0
         assert isinstance(robustness, float)
 
@@ -161,6 +161,6 @@ class TestRunner(unittest.TestCase):
         runner = ComprehensiveTextRunner(data_generator, y_test, model, data_generator)
         report, robustness = runner.run(save_incorrect_mutated_samples=False)
         print(report.to_string())
-        assert len(report.columns) == 10
+        assert len(report.columns) == 13
         assert report.isna().sum().sum() == 0
         assert isinstance(robustness, float)
