@@ -35,7 +35,7 @@ runner = ComprehensiveImageRunner(ds_generator(test_dataset, (299, 299)), y_test
                                   lambda sample: keras.applications.xception.preprocess_input(
                                       np.expand_dims(np.array(sample), axis=0)))
 
-report, robustness = runner.run()
+report, robustness = runner.run(True, 'output/imagenet')
 
 print(report.to_string())
 print(robustness)

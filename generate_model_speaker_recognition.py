@@ -7,13 +7,13 @@ Original file is located at
     https://colab.research.google.com/drive/1FnMbAEXLpe6blB1PJMBwfWbvYWxWZ2wb
 """
 
-!mkdir -p /root/.kaggle
+#!mkdir -p /root/.kaggle
 
-!mv kaggle.json /root/.kaggle
+#!mv kaggle.json /root/.kaggle
 
-!kaggle datasets download -d kongaevans/speaker-recognition-dataset
+#!kaggle datasets download -d kongaevans/speaker-recognition-dataset
 
-!unzip speaker-recognition-dataset.zip
+#!unzip speaker-recognition-dataset.zip
 
 """
 Title: Speaker Recognition
@@ -62,7 +62,7 @@ import tensorflow as tf
 from tensorflow import keras
 
 from pathlib import Path
-from IPython.display import display, Audio
+#from IPython.display import display, Audio
 
 # Get the data from https://www.kaggle.com/kongaevans/speaker-recognition-dataset/download
 # and save it to the 'Downloads' folder in your HOME directory
@@ -487,12 +487,12 @@ for audios, labels in test_ds.take(1):
                 class_names[y_pred[index]],
             )
         )
-        display(Audio(audios[index, :, :].squeeze(), rate=SAMPLING_RATE))
+        # display(Audio(audios[index, :, :].squeeze(), rate=SAMPLING_RATE))
 
 print(train_audio_paths)
 print(valid_labels)
 
-!zip -r data.zip 16000_pcm_speeches/
+#!zip -r data.zip 16000_pcm_speeches/
 
 print(model.evaluate(valid_ds))
 

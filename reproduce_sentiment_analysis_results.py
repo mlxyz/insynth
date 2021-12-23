@@ -1,41 +1,42 @@
-
 import tensorflow as tf
 import numpy as np
 
-# download https://ai.stanford.edu/~amaas/data/sentiment/aclImdb_v1.tar.gz
 
+# download and extract https://ai.stanford.edu/~amaas/data/sentiment/aclImdb_v1.tar.gz to data/sentiment_analysis/
+DATA_ROOT_PATH = 'data/sentiment_analysis/'
 batch_size = 32
 raw_train_ds = tf.keras.preprocessing.text_dataset_from_directory(
-    "aclImdb/train",
+    DATA_ROOT_PATH+"aclImdb/train",
     batch_size=batch_size,
     validation_split=0.2,
     subset="training",
     seed=1337,
 )
 raw_val_ds = tf.keras.preprocessing.text_dataset_from_directory(
-    "aclImdb/train",
+    DATA_ROOT_PATH+"aclImdb/train",
     batch_size=batch_size,
     validation_split=0.2,
     subset="validation",
     seed=1337,
 )
 raw_test_ds = tf.keras.preprocessing.text_dataset_from_directory(
-    "aclImdb/test", batch_size=batch_size
+    DATA_ROOT_PATH+"aclImdb/test", batch_size=batch_size
 )
 
 print(f"Number of batches in raw_train_ds: {raw_train_ds.cardinality()}")
 print(f"Number of batches in raw_val_ds: {raw_val_ds.cardinality()}")
 print(f"Number of batches in raw_test_ds: {raw_test_ds.cardinality()}")
 
+for text_batch, label_batch in raw_train_ds.take(1):
+    for i in range(5):
+        print(text_batch.numpy()[i])
+        print(label_batch.numpy()[i])
 
-from keras.layers import TextVectorization
+
+from tensorflow.keras.layers import TextVectorization
 import string
 import re
 
-# Having looked at our data above, we see that the raw text contains HTML break
-# tags of the form '<br />'. These tags will not be removed by the default
-# standardizer (which doesn't strip HTML). Because of this, we will need to
-# create a custom standardization function.
 def custom_standardization(input_data):
     lowercase = tf.strings.lower(input_data)
     stripped_html = tf.strings.regex_replace(lowercase, "<br />", " ")
@@ -44,18 +45,10 @@ def custom_standardization(input_data):
     )
 
 
-# Model constants.
 max_features = 20000
 embedding_dim = 128
 sequence_length = 500
 
-# Now that we have our custom standardization, we can instantiate our text
-# vectorization layer. We are using this layer to normalize, split, and map
-# strings to integers, so we set our 'output_mode' to 'int'.
-# Note that we're using the default split function,
-# and the custom standardization defined above.
-# We also set an explicit maximum sequence length, since the CNNs later in our
-# model won't support ragged sequences.
 vectorize_layer = TextVectorization(
     standardize=custom_standardization,
     max_tokens=max_features,
@@ -63,48 +56,10 @@ vectorize_layer = TextVectorization(
     output_sequence_length=sequence_length,
 )
 
-# Now that the vocab layer has been created, call `adapt` on a text-only
-# dataset to create the vocabulary. You don't have to batch, but for very large
-# datasets this means you're not keeping spare copies of the dataset in memory.
-
 # Let's make a text-only dataset (no labels):
 text_ds = raw_train_ds.map(lambda x, y: x)
 # Let's call `adapt`:
 vectorize_layer.adapt(text_ds)
-
-"""
-## Two options to vectorize the data
-
-There are 2 ways we can use our text vectorization layer:
-
-**Option 1: Make it part of the model**, so as to obtain a model that processes raw
- strings, like this:
-"""
-
-"""
-
-```python
-text_input = tf.keras.Input(shape=(1,), dtype=tf.string, name='text')
-x = vectorize_layer(text_input)
-x = layers.Embedding(max_features + 1, embedding_dim)(x)
-...
-```
-
-**Option 2: Apply it to the text dataset** to obtain a dataset of word indices, then
- feed it into a model that expects integer sequences as inputs.
-
-An important difference between the two is that option 2 enables you to do
-**asynchronous CPU processing and buffering** of your data when training on GPU.
-So if you're training the model on GPU, you probably want to go with this option to get
- the best performance. This is what we will do below.
-
-If we were to export our model to production, we'd ship a model that accepts raw
-strings as input, like in the code snippet for option 1 above. This can be done after
- training. We do this in the last section.
-
-
-"""
-
 
 def vectorize_text(text, label):
     text = tf.expand_dims(text, -1)
@@ -121,11 +76,6 @@ train_ds = train_ds.cache().prefetch(buffer_size=10)
 val_ds = val_ds.cache().prefetch(buffer_size=10)
 test_ds = test_ds.cache().prefetch(buffer_size=10)
 
-"""
-## Build a model
-
-We choose a simple 1D convnet starting with an `Embedding` layer.
-"""
 
 from tensorflow.keras import layers
 
@@ -154,23 +104,18 @@ model = tf.keras.Model(inputs, predictions)
 # Compile the model with binary crossentropy loss and an adam optimizer.
 model.compile(loss="binary_crossentropy", optimizer="adam", metrics=["accuracy"])
 
-"""
-## Train the model
-"""
+"""## Train the model"""
 
 epochs = 3
 
 # Fit the model using the train and test datasets.
 model.fit(train_ds, validation_data=val_ds, epochs=epochs)
 
-"""
-## Evaluate the model on the test set
-"""
+"""## Evaluate the model on the test set"""
 
 model.evaluate(test_ds)
 
-"""
-## Make an end-to-end model
+"""## Make an end-to-end model
 
 If you want to obtain a model capable of processing raw strings, you can simply
 create a new model (using the weights we just trained):
