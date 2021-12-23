@@ -113,7 +113,7 @@ class TestRunner(unittest.TestCase):
         # filter out compression perturbator as it generates colored images which cannot be processed by this model
         runner.perturbators = [perturbator for perturbator in runner.perturbators if
                                not isinstance(perturbator, ImageCompressionPerturbator)]
-        report, robustness = runner.run(save_mutated_samples=False)
+        report, robustness = runner.run(save_incorrect_mutated_samples=False)
         print(report.to_string())
         assert len(report.columns) == 10
         assert report.isna().sum().sum() == 0
@@ -138,7 +138,7 @@ class TestRunner(unittest.TestCase):
             model, data_generator)
         runner.perturbators = [AudioCompressionPerturbator(p=1.0)]
         runner.coverage_calculators=[]
-        report, robustness = runner.run(save_mutated_samples=False)
+        report, robustness = runner.run(save_incorrect_mutated_samples=False)
         print(report)
         assert len(report.columns) == 7
         assert report.isna().sum().sum() == 0
@@ -159,7 +159,7 @@ class TestRunner(unittest.TestCase):
         y_test = LabelEncoder().fit_transform(y_test)
         model = self._build_sentiment_model()
         runner = ComprehensiveTextRunner(data_generator, y_test, model, data_generator)
-        report, robustness = runner.run(save_mutated_samples=False)
+        report, robustness = runner.run(save_incorrect_mutated_samples=False)
         print(report.to_string())
         assert len(report.columns) == 10
         assert report.isna().sum().sum() == 0

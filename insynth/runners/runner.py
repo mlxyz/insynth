@@ -42,7 +42,7 @@ class BasicRunner(AbstractRunner):
         self.model = model
         self.pre_predict_lambda = pre_predict_lambda or (lambda sample: np.array(sample))
 
-    def run(self, save_mutated_samples=False, output_path=None):
+    def run(self, save_incorrect_mutated_samples=False, output_path=None):
         results = {}
 
         y_pred = []
@@ -67,12 +67,14 @@ class BasicRunner(AbstractRunner):
 
             predictions = []
             for index, mutated_sample in tqdm(enumerate(mutated_samples), desc='Running on Samples...'):
-                if save_mutated_samples:
-                    self._save(mutated_sample, f'{output_path}/{perturbator_name}_{index}')
-
+                correct_label = self.dataset_y[index]
+                previous_prediction = y_pred[index]
                 transformed_mutated_sample = self.pre_predict_lambda(mutated_sample)
-
-                predictions.append(np.argmax(self.model(transformed_mutated_sample, training=False)))
+                prediction = np.argmax(self.model(transformed_mutated_sample, training=False))
+                predictions.append(prediction)
+                # save if wrongly predicted but was correctly predicted previously
+                if save_incorrect_mutated_samples and prediction != correct_label and previous_prediction == correct_label:
+                    self._save(mutated_sample, f'{output_path}/{perturbator_name}_{correct_label}_{prediction}_{index}')
 
                 for calculator in mutated_coverage_calculators:
                     calculator.update_coverage(transformed_mutated_sample)
