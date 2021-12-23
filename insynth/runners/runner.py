@@ -199,7 +199,10 @@ class ComprehensiveImageRunner(BasicImageRunner):
         calcs = [
             NeuronCoverageCalculator(model),
             StrongNeuronActivationCoverageCalculator(model),
-            KMultiSectionNeuronCoverageCalculator(model)
+            KMultiSectionNeuronCoverageCalculator(model),
+            NeuronBoundaryCoverageCalculator(model),
+            TopKNeuronCoverageCalculator(model),
+            TopKNeuronPatternsCalculator(model)
         ]
         for calc in calcs:
             update_neuron_bounds_op = getattr(calc, "update_neuron_bounds", None)

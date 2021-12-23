@@ -133,10 +133,10 @@ def pre_predict(sample):
 
 runner = ComprehensiveAudioRunner(x_test_data_generator, valid_labels, model, x_snac_data_generator,
                                   pre_predict_lambda=pre_predict)
+os.makedirs('output/speaker_recognition/')
 report, robustness = runner.run(True, 'output/speaker_recognition')
 
 print(report.to_string())
 print(robustness)
 
-os.makedirs('output/speaker_recognition/')
 report.to_csv('output/speaker_recognition/report.csv')
