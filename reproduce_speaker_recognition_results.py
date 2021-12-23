@@ -122,7 +122,6 @@ model.load_weights('data/speaker_recognition/model_weights.h5')
 x_test_data_generator = lambda: ((np.squeeze(sample[0][0]), sample[0][1].numpy()) for sample in valid_ds)
 x_snac_data_generator = lambda: ((np.squeeze(sample[0][0]), sample[0][1].numpy()) for sample in train_ds)
 
-print(valid_labels)
 
 
 def pre_predict(sample):

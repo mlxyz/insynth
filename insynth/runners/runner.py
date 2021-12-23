@@ -16,7 +16,8 @@ from insynth.metrics.coverage.neuron import StrongNeuronActivationCoverageCalcul
     TopKNeuronCoverageCalculator, TopKNeuronPatternsCalculator
 from insynth.perturbators.audio import AudioBackgroundWhiteNoisePerturbator, AudioPitchPerturbator, \
     AudioClippingPerturbator, AudioVolumePerturbator, AudioEchoPerturbator, \
-    AudioShortNoisePerturbator, AudioBackgroundNoisePerturbator, AudioImpulseResponsePerturbator
+    AudioShortNoisePerturbator, AudioBackgroundNoisePerturbator, AudioImpulseResponsePerturbator, \
+    AudioCompressionPerturbator
 from insynth.perturbators.image import ImageNoisePerturbator, ImageBrightnessPerturbator, ImageContrastPerturbator, \
     ImageSharpnessPerturbator, ImageFlipPerturbator, ImageOcclusionPerturbator, ImageCompressionPerturbator, \
     ImagePixelizePerturbator
@@ -216,7 +217,7 @@ class ComprehensiveAudioRunner(BasicAudioRunner):
 
     def _get_all_perturbators(self):
         return [AudioBackgroundWhiteNoisePerturbator(p=1.0),
-                # AudioCompressionPerturbator(p=1.0),
+                AudioCompressionPerturbator(p=1.0),
                 AudioPitchPerturbator(p=1.0),
                 AudioClippingPerturbator(p=1.0),
                 AudioVolumePerturbator(p=1.0),
