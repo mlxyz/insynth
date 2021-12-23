@@ -35,7 +35,7 @@ runner = ComprehensiveImageRunner(ds_generator(test_dataset, (299, 299)), y_test
                                   lambda sample: keras.applications.xception.preprocess_input(
                                       np.expand_dims(np.array(sample), axis=0)))
 
-report, robustness = runner.run(True, 'output/imagenet')
+report, robustness = runner.run(True, 'output/imagenet/xception')
 
 print(report.to_string())
 print(robustness)
@@ -51,12 +51,12 @@ runner = ComprehensiveImageRunner(ds_generator(test_dataset, (224, 224)), y_test
                                   lambda sample: keras.applications.mobilenet_v2.preprocess_input(
                                       np.expand_dims(np.array(sample), axis=0)))
 
-report, robustness = runner.run()
+os.makedirs('output/imagenet/mobilenetv2/')
+report, robustness = runner.run(True, 'output/imagenet/mobilenetv2')
 
 print(report.to_string())
 print(robustness)
 
-os.makedirs('output/imagenet/mobilenetv2/')
 report.to_csv('output/imagenet/mobilenetv2/report.csv')
 
 ### InceptionResNetV2
@@ -68,10 +68,10 @@ runner = ComprehensiveImageRunner(ds_generator(test_dataset, (299, 299)), y_test
                                   lambda sample: keras.applications.inception_resnet_v2.preprocess_input(
                                       np.expand_dims(np.array(sample), axis=0)))
 
-report, robustness = runner.run()
+os.makedirs('output/imagenet/inceptionresnet/')
+report, robustness = runner.run(True, 'output/imagenet/inceptionresnet')
 
 print(report.to_string())
 print(robustness)
 
-os.makedirs('output/imagenet/inceptionresnet/')
 report.to_csv('output/imagenet/inceptionresnet/report.csv')
