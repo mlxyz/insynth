@@ -4,8 +4,7 @@ import re
 import string
 
 import tensorflow as tf
-# download and extract https://ai.stanford.edu/~amaas/data/sentiment/aclImdb_v1.tar.gz to data/sentiment_analysis/
-# and delete train/unsup
+# download and extract https://insynth-data.s3.eu-central-1.amazonaws.com/sentiment_analysis_experiment.zip to data/
 from keras.layers import TextVectorization
 
 from insynth.runners.runner import ComprehensiveTextRunner

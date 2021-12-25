@@ -76,6 +76,8 @@ for old_calc, new_calc in zip(old_coverage_calculators, new_coverage_calculators
     print(f'New Calculator Done: took {end_time - start_time} seconds.')
     results[calc_name]['new'] = end_time - start_time
 
+    assert old_calc.get_coverage() == new_calc.get_coverage()
+
 df = pd.DataFrame.from_dict(results, orient='index')
 
 df.to_csv('performance_comparison.csv')
