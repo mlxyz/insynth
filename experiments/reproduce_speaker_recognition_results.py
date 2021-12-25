@@ -9,7 +9,7 @@ from insynth.runners.runner import ComprehensiveAudioRunner
 # download and extract https://insynth-data.s3.eu-central-1.amazonaws.com/speaker_recognition_experiment.zip to data/
 np.seterr(divide='ignore', invalid='ignore')
 logging.basicConfig(level=logging.INFO)
-DATASET_ROOT = os.path.join("data/speaker_recognition/16000_pcm_speeches")
+DATASET_ROOT = os.path.join("../data/speaker_recognition/16000_pcm_speeches")
 
 AUDIO_SUBFOLDER = "audio"
 
@@ -65,13 +65,13 @@ def audio_to_fft(audio):
 
 # Get the list of audio file paths along with their corresponding labels
 
-with open('data/speaker_recognition/train_paths.txt', 'r') as f:
+with open('../data/speaker_recognition/train_paths.txt', 'r') as f:
     train_audio_paths = f.read().splitlines()
-with open('data/speaker_recognition/train_labels.txt', 'r') as f:
+with open('../data/speaker_recognition/train_labels.txt', 'r') as f:
     train_labels = list(map(int, f.read().splitlines()))
-with open('data/speaker_recognition/valid_paths.txt', 'r') as f:
+with open('../data/speaker_recognition/valid_paths.txt', 'r') as f:
     valid_audio_paths = f.read().splitlines()
-with open('data/speaker_recognition/valid_labels.txt', 'r') as f:
+with open('../data/speaker_recognition/valid_labels.txt', 'r') as f:
     valid_labels = list(map(int, f.read().splitlines()))
 
 train_ds = paths_and_labels_to_dataset(train_audio_paths, train_labels)
@@ -133,7 +133,7 @@ def pre_predict(sample):
 
 runner = ComprehensiveAudioRunner(x_test_data_generator, valid_labels, model, x_snac_data_generator,
                                   pre_predict_lambda=pre_predict)
-os.makedirs('output/speaker_recognition/')
+os.makedirs('../output/speaker_recognition/')
 report, robustness = runner.run(True, 'output/speaker_recognition')
 
 print(report.to_string())
