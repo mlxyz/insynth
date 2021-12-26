@@ -48,7 +48,12 @@ class BasicRunner(AbstractRunner):
         y_pred = []
         for sample in tqdm(self.dataset_x(), desc='Processing Original Dataset...'):
             transformed_sample = self.pre_predict_lambda(sample)
-            y_pred.append(np.argmax(self.model(transformed_sample, training=False)))
+            raw_prediction=self.model(transformed_sample, training=False).numpy()
+            if raw_prediction.size == 1:
+                prediction = 1 if raw_prediction.flatten()[0] > 0.5 else 0
+            else:
+                prediction = np.argmax(raw_prediction)
+            y_pred.append(prediction)
             for coverage_calculator in self.coverage_calculators:
                 coverage_calculator.update_coverage(transformed_sample)
 
@@ -70,7 +75,11 @@ class BasicRunner(AbstractRunner):
                 correct_label = self.dataset_y[index]
                 previous_prediction = y_pred[index]
                 transformed_mutated_sample = self.pre_predict_lambda(mutated_sample)
-                prediction = np.argmax(self.model(transformed_mutated_sample, training=False))
+                raw_prediction = self.model(transformed_mutated_sample, training=False).numpy()
+                if raw_prediction.size == 1:
+                    prediction = 1 if raw_prediction.flatten()[0] > 0.5 else 0
+                else:
+                    prediction = np.argmax(raw_prediction)
                 predictions.append(prediction)
                 # save if wrongly predicted but was correctly predicted previously
                 if save_incorrect_mutated_samples and prediction != correct_label and previous_prediction == correct_label:

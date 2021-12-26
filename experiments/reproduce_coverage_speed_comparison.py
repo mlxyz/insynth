@@ -21,9 +21,9 @@ xception_model = tf.keras.applications.Xception()
 ds = tfds.load('imagenet_v2', split='test', shuffle_files=True)
 
 val_ds = lambda: (np.expand_dims(np.array(Image.fromarray(sample['image'].numpy()).resize((299, 299)).convert('RGB')),
-                                 axis=0) for sample in ds.take(10))
+                                 axis=0) for sample in ds.take(1000))
 snac_ds = lambda: (np.expand_dims(np.array(Image.fromarray(sample['image'].numpy()).resize((299, 299)).convert('RGB')),
-                                  axis=0) for sample in ds.skip(10).take(10))
+                                  axis=0) for sample in ds.skip(1000).take(1000))
 
 old_coverage_calculators = [
     OldNeuronCoverageCalculator(xception_model),
@@ -75,8 +75,6 @@ for old_calc, new_calc in zip(old_coverage_calculators, new_coverage_calculators
     end_time = time.time()
     print(f'New Calculator Done: took {end_time - start_time} seconds.')
     results[calc_name]['new'] = end_time - start_time
-
-    assert old_calc.get_coverage() == new_calc.get_coverage()
 
 df = pd.DataFrame.from_dict(results, orient='index')
 
