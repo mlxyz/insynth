@@ -79,18 +79,18 @@ raw_train_ds = tf.keras.preprocessing.text_dataset_from_directory(
     batch_size=batch_size,
     validation_split=0.2,
     subset="training",
-    seed=1337,shuffle=False
-).shuffle(seed=1337, buffer_size=4096)
+    seed=1337,shuffle=True
+)
 raw_val_ds = tf.keras.preprocessing.text_dataset_from_directory(
     "aclImdb/train",
     batch_size=batch_size,
     validation_split=0.2,
     subset="validation",
-    seed=1337,shuffle=False
-).shuffle(seed=1337, buffer_size=4096)
+    seed=1337,shuffle=True
+)
 raw_test_ds = tf.keras.preprocessing.text_dataset_from_directory(
-    "aclImdb/test", batch_size=batch_size,shuffle=False
-).shuffle(seed=1337, buffer_size=4096)
+    "aclImdb/test", batch_size=batch_size,shuffle=True
+)
 
 print(f"Number of batches in raw_train_ds: {raw_train_ds.cardinality()}")
 print(f"Number of batches in raw_val_ds: {raw_val_ds.cardinality()}")

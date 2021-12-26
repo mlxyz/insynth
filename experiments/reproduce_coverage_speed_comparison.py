@@ -59,9 +59,9 @@ for old_calc, new_calc in zip(old_coverage_calculators, new_coverage_calculators
         start_time = time.time()
         for sample in tqdm(snac_ds(), desc='[New Calculator] Processing SNAC...'):
             new_calc.update_neuron_bounds(sample)
+        end_time = time.time()
         print(f'SNAC Processing of New Calculator Done: took {end_time - start_time} seconds.')
         results[calc_name]['snac_new'] = end_time - start_time
-        end_time = time.time()
     start_time = time.time()
     for sample in tqdm(val_ds(), desc='[Old Calculator] Processing Samples...'):
         old_calc.update_coverage(sample)

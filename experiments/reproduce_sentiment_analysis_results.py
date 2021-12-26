@@ -2,6 +2,7 @@ import os
 import pickle
 import re
 import string
+from itertools import tee
 
 import tensorflow as tf
 # download and extract https://insynth-data.s3.eu-central-1.amazonaws.com/sentiment_analysis_experiment.zip to data/
@@ -17,19 +18,19 @@ raw_train_ds = tf.keras.preprocessing.text_dataset_from_directory(
     validation_split=0.2,
     subset="training",
     seed=1337,
-    shuffle=False
-).shuffle(seed=1337, buffer_size=4096).unbatch()
+    shuffle=True
+).unbatch()
 raw_val_ds = tf.keras.preprocessing.text_dataset_from_directory(
     DATA_ROOT_PATH + "aclImdb/train",
     batch_size=batch_size,
     validation_split=0.2,
     subset="validation",
     seed=1337,
-    shuffle=False
-).shuffle(seed=1337, buffer_size=4096).unbatch()
+    shuffle=True
+).unbatch()
 raw_test_ds = tf.keras.preprocessing.text_dataset_from_directory(
-    DATA_ROOT_PATH + "aclImdb/test", batch_size=batch_size, shuffle=False
-).shuffle(seed=1337, buffer_size=4096).unbatch()
+    DATA_ROOT_PATH + "aclImdb/test", batch_size=batch_size, shuffle=True
+).unbatch()
 
 print(f"Number of batches in raw_train_ds: {raw_train_ds.cardinality()}")
 print(f"Number of batches in raw_val_ds: {raw_val_ds.cardinality()}")
@@ -63,10 +64,10 @@ text_vectroize_layer.set_weights(from_disk['weights'])
 def vectorize_text(text):
     return text_vectroize_layer([text])
 
-
-x_test_data_generator = lambda: (sample[0].numpy().decode('utf-8') for sample in raw_val_ds)
-y_test = [sample[1].numpy() for sample in raw_val_ds]
-x_snac_data_generator = lambda: (sample[0].numpy().decode('utf-8') for sample in raw_train_ds)
+x_iterator,y_iterator = tee(raw_val_ds.as_numpy_iterator())
+x_test_data_generator = lambda: (sample[0].decode('utf-8') for sample in x_iterator)
+y_test = [sample[1] for sample in y_iterator]
+x_snac_data_generator = lambda: (sample[0].numpy().decode('utf-8') for sample in raw_train_ds.take(100))
 model.summary()
 runner = ComprehensiveTextRunner(x_test_data_generator, y_test, model,
                                  x_snac_data_generator,
