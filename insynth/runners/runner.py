@@ -48,7 +48,7 @@ class BasicRunner(AbstractRunner):
         y_pred = []
         for sample in tqdm(self.dataset_x(), desc='Processing Original Dataset...'):
             transformed_sample = self.pre_predict_lambda(sample)
-            raw_prediction=self.model(transformed_sample, training=False).numpy()
+            raw_prediction = self.model(transformed_sample, training=False).numpy()
             if raw_prediction.size == 1:
                 prediction = 1 if raw_prediction.flatten()[0] > 0.5 else 0
             else:
@@ -67,11 +67,10 @@ class BasicRunner(AbstractRunner):
             perturbator_name = type(perturbator).__name__
             logging.info(f'Working on Perturbator: {perturbator_name}')
             mutated_coverage_calculators = [copy.copy(calculator) for calculator in self.coverage_calculators]
-            mutated_samples = map(perturbator.apply,
-                                  self.dataset_x())
 
             predictions = []
-            for index, mutated_sample in tqdm(enumerate(mutated_samples), desc='Running on Samples...'):
+            for index, sample in tqdm(enumerate(self.dataset_x()), desc='Running on Samples...'):
+                mutated_sample = perturbator.apply(sample)
                 correct_label = self.dataset_y[index]
                 previous_prediction = y_pred[index]
                 transformed_mutated_sample = self.pre_predict_lambda(mutated_sample)
@@ -141,7 +140,7 @@ class BasicTextRunner(BasicRunner):
                          pre_predict_lambda or self._pre_prediction)
 
     def _save(self, sample, output_path):
-        with open(output_path + '.txt', 'w') as txt_out:
+        with open(output_path + '.txt', 'w', encoding='utf-8') as txt_out:
             txt_out.write(sample)
 
     def custom_standardization(self, input_data):

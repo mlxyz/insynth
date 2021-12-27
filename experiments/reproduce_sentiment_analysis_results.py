@@ -2,7 +2,6 @@ import os
 import pickle
 import re
 import string
-from itertools import tee
 
 import tensorflow as tf
 # download and extract https://insynth-data.s3.eu-central-1.amazonaws.com/sentiment_analysis_experiment.zip to data/
@@ -20,7 +19,15 @@ raw_train_ds = tf.keras.preprocessing.text_dataset_from_directory(
     seed=1337,
     shuffle=True
 ).unbatch()
-raw_val_ds = tf.keras.preprocessing.text_dataset_from_directory(
+raw_val_ds_x = tf.keras.preprocessing.text_dataset_from_directory(
+    DATA_ROOT_PATH + "aclImdb/train",
+    batch_size=batch_size,
+    validation_split=0.2,
+    subset="validation",
+    seed=1337,
+    shuffle=True
+).unbatch()
+raw_val_ds_y = tf.keras.preprocessing.text_dataset_from_directory(
     DATA_ROOT_PATH + "aclImdb/train",
     batch_size=batch_size,
     validation_split=0.2,
@@ -33,12 +40,8 @@ raw_test_ds = tf.keras.preprocessing.text_dataset_from_directory(
 ).unbatch()
 
 print(f"Number of batches in raw_train_ds: {raw_train_ds.cardinality()}")
-print(f"Number of batches in raw_val_ds: {raw_val_ds.cardinality()}")
+print(f"Number of batches in raw_val_ds: {raw_val_ds_x.cardinality()}")
 print(f"Number of batches in raw_test_ds: {raw_test_ds.cardinality()}")
-
-for text_sample, label_sample in raw_train_ds.take(5):
-    print(text_sample.numpy())
-    print(label_sample.numpy())
 
 
 @tf.keras.utils.register_keras_serializable()
@@ -64,10 +67,11 @@ text_vectroize_layer.set_weights(from_disk['weights'])
 def vectorize_text(text):
     return text_vectroize_layer([text])
 
-x_iterator,y_iterator = tee(raw_val_ds.as_numpy_iterator())
-x_test_data_generator = lambda: (sample[0].decode('utf-8') for sample in x_iterator)
-y_test = [sample[1] for sample in y_iterator]
-x_snac_data_generator = lambda: (sample[0].numpy().decode('utf-8') for sample in raw_train_ds.take(100))
+
+x_test_data = [sample[0].numpy().decode('utf-8') for sample in raw_val_ds_x]
+x_test_data_generator = lambda: x_test_data
+y_test = [sample[1].numpy() for sample in raw_val_ds_y]
+x_snac_data_generator = lambda: (sample[0].numpy().decode('utf-8') for sample in raw_train_ds.take(10))
 model.summary()
 runner = ComprehensiveTextRunner(x_test_data_generator, y_test, model,
                                  x_snac_data_generator,
