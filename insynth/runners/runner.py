@@ -64,7 +64,7 @@ class BasicRunner(AbstractRunner):
         all_coverage_calculators = [copy.copy(calculator) for calculator in self.coverage_calculators]
         logging.info('Processing mutated dataset...')
         for perturbator_index, perturbator in tqdm(enumerate(self.perturbators), desc='Applying Perturbators...'):
-            perturbator_name = type(perturbator).__name__
+            perturbator_name = str(perturbator_index) + '_' + type(perturbator).__name__
             logging.info(f'Working on Perturbator: {perturbator_name}')
             mutated_coverage_calculators = [copy.copy(calculator) for calculator in self.coverage_calculators]
 
@@ -87,7 +87,7 @@ class BasicRunner(AbstractRunner):
                 for calculator in mutated_coverage_calculators:
                     calculator.update_coverage(transformed_mutated_sample)
 
-            self.put_results_into_dict(results, perturbator_name, self.dataset_y, predictions)
+            self.put_results_into_dict(results, perturbator_name, self.dataset_y, predictions, args=vars(perturbator))
             self.put_coverage_into_dict(results, perturbator_name,
                                         mutated_coverage_calculators)
 
@@ -106,7 +106,7 @@ class BasicRunner(AbstractRunner):
                                                     map(lambda x: type(x).__name__, coverage_calculators)):
             dct[perturbator_name][calculator_name] = coverage_result
 
-    def put_results_into_dict(self, dct, name, y_true, y_pred):
+    def put_results_into_dict(self, dct, name, y_true, y_pred, args=None):
         results = classification_report(y_true,
                                         y_pred,
                                         output_dict=True, zero_division=0)
@@ -119,6 +119,8 @@ class BasicRunner(AbstractRunner):
             'micro_f1': results['weighted avg']['f1-score'],
             'micro_rec': results['weighted avg']['recall'],
             'micro_prec': results['weighted avg']['precision']}
+        if args:
+            dct[name]['args'] = args
 
     @abstractmethod
     def _save(self, sample, output_path):
