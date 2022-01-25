@@ -1,0 +1,195 @@
+@startuml
+!theme vibrant
+package insynth {
+
+package insynth.runners {
+abstract class Runner{
+- perturbators: Perturbator[]
+- calculators: Calculator[]
+- model: KerasModel
+- dataset
+
++ run()
+{abstract} + pre_prediction(input)
+}
+
+class BasicImageRunner extends Runner{}
+class BasicAudioRunner extends Runner{}
+class BasicTextRunner extends Runner{}
+
+class ExtensiveImageRunner extends BasicImageRunner{}
+class ExtensiveAudioRunner extends BasicAudioRunner{}
+class ExtensiveTextRunner extends BasicTextRunner{}
+}
+
+
+package insynth.perturbators {
+
+
+abstract class Perturbator{
+- apply_probability: Double
++ apply(input)
+}
+
+abstract WhiteBoxPerturbator extends Perturbator{
+  - model : KerasModel
+  }
+
+abstract BlackBoxPerturbator extends Perturbator{
+}
+
+class PipelinePerturbator extends Perturbator{
+    perturbators: Perturbator[]
+}
+
+abstract GenericWhiteBoxPerturbator extends WhiteBoxPerturbator{
+}
+
+
+package insynth.perturbators.generic {
+abstract GenericBlackBoxPerturbator extends BlackBoxPerturbator{}
+class GenericProbabilityPerturbator extends GenericBlackBoxPerturbator{
+    + fit(dataset)
+}
+}
+
+
+
+
+
+package insynth.perturbators.image {
+abstract ImageWhiteBoxPerturbator extends WhiteBoxPerturbator{
++ apply(image)
+}
+abstract ImageBlackBoxPerturbator extends BlackBoxPerturbator{
++ apply(image)
+}
+class ImageNoisePerturbator extends ImageBlackBoxPerturbator{
+    - noise_prob_dist
+}
+
+class ImageBrightnessPerturbator extends ImageBlackBoxPerturbator{
+    - brightness_change_prob_dist
+}
+class ImageContrastPerturbator extends ImageBlackBoxPerturbator{
+    - contrast_change_prob_dist
+}
+class ImageSharpnessPerturbator extends ImageBlackBoxPerturbator{
+    - sharpness_change_prob_dist
+}
+class ImageFlipPerturbator extends ImageBlackBoxPerturbator{
+    - transformation_type
+}
+class ImageOcclusionPerturbator extends ImageBlackBoxPerturbator{
+    - strength_prob_dist
+    - width_prob_dist
+    - height_prob_dist
+}
+class ImageCompressionPerturbator extends ImageBlackBoxPerturbator{
+    - compression_prob_dist
+}
+class ImagePixelizePerturbator extends ImageBlackBoxPerturbator{
+    - pixelization_prob_dist
+}
+}
+
+
+package insynth.perturbators.audio {
+abstract AudioBlackBoxPerturbator extends BlackBoxPerturbator{
++ apply(audio)
+}
+abstract AudioWhiteBoxPerturbator extends WhiteBoxPerturbator{
++ apply(audio)
+}
+class AudioBackgroundWhiteNoisePerturbator extends AudioBlackBoxPerturbator{
+    - noise_prob_dist
+}
+
+class AudioCompressionPerturbator extends AudioBlackBoxPerturbator{
+    - compression_prob_dist
+}
+class AudioPitchPerturbator extends AudioBlackBoxPerturbator{
+    - pitch_prob_dist
+}
+
+class AudioClippingPerturbator extends AudioBlackBoxPerturbator{
+    - clipping_prob_dist
+}
+class AudioVolumePerturbator extends AudioBlackBoxPerturbator{
+    - volume_prob_dist
+}
+class AudioEchoPerturbator extends AudioBlackBoxPerturbator{
+    - echo_prob_dist
+}
+class AudioShortNoisePerturbator extends AudioBlackBoxPerturbator{
+    - noise_types: String[]
+}
+class AudioBackgroundNoisePerturbator extends AudioBlackBoxPerturbator{
+    - noise_types: String[]
+}
+class AudioImpulseResponsePerturbator extends AudioBlackBoxPerturbator{
+    - impulse_types: String[]
+}
+}
+
+package insynth.perturbators.text {
+abstract TextWhiteBoxPerturbator extends WhiteBoxPerturbator{
++ apply(text)W
+}
+
+abstract TextBlackBoxPerturbator extends BlackBoxPerturbator{
++ apply(text)
+}
+class TextTypoPerturbator extends TextBlackBoxPerturbator{
+    - typo_prob_dist
+}
+class TextCasePerturbator extends TextBlackBoxPerturbator{
+    - case_switch_prob_dist
+}
+class TextWordRemovalPerturbator extends TextBlackBoxPerturbator{
+    - word_removal_prob_dist
+}
+class TextStopWordRemovalPerturbator extends TextBlackBoxPerturbator{
+    - stop_word_removal_prob_dist
+}
+
+class TextWordSwitchPerturbator extends TextBlackBoxPerturbator{
+    - word_switch_prob_dist
+}
+class TextCharacterSwitchPerturbator extends TextBlackBoxPerturbator{
+    - char_switch_prob_dist
+}
+class TextPunctuationErrorPerturbator extends TextBlackBoxPerturbator{
+    - punct_error_prob_dist
+}
+}
+}
+
+package insynth.calculators {
+abstract class Calculator{
+- model : KerasModel
++ get_coverage()
++ update_coverage(input)
+}
+class NeuronCoverageCalculator extends Calculator{
+
+}
+class StrongNeuronActivationCoverageCalculator extends Calculator{
++ update_neuron_bounds(dataset)
+}
+
+class KMultiSectionNeuronCoverageCalculator extends StrongNeuronActivationCoverageCalculator{}
+
+class NeuronBoundaryCoverageCalculator extends StrongNeuronActivationCoverageCalculator{}
+
+class TopKNeuronCoverageCalculator extends Calculator{}
+
+class TopKNeuronPatternsCalculator extends Calculator{}
+}
+}
+Runner "1" -> "*" Calculator : uses >
+Perturbator "*" <- "1" Runner: < uses
+
+
+hide empty members
+@enduml
