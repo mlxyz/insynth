@@ -42,11 +42,12 @@ class PipelinePerturbator extends Perturbator{
     perturbators: Perturbator[]
 }
 
-abstract GenericWhiteBoxPerturbator extends WhiteBoxPerturbator{
-}
+
 
 
 package insynth.perturbators.generic {
+abstract GenericWhiteBoxPerturbator extends WhiteBoxPerturbator{
+}
 abstract GenericBlackBoxPerturbator extends BlackBoxPerturbator{}
 class GenericProbabilityPerturbator extends GenericBlackBoxPerturbator{
     + fit(dataset)
