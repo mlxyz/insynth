@@ -72,15 +72,13 @@ class StrongNeuronActivationCoverageCalculator(AbstractCoverageCalculator):
             lower_neuron_bounds_dict = self.lower_neuron_bounds_dict[layer_name]
             layer_activations = layer_activations.flatten()
 
-            upper_neuron_bounds_dict[
-                (layer_activations > upper_neuron_bounds_dict) | np.isnan(upper_neuron_bounds_dict)] = \
-                layer_activations[
-                    (layer_activations > upper_neuron_bounds_dict) | np.isnan(upper_neuron_bounds_dict)]
+            activation_larger_or_not_set_condition = (layer_activations > upper_neuron_bounds_dict) | np.isnan(
+                upper_neuron_bounds_dict)
+            upper_neuron_bounds_dict[activation_larger_or_not_set_condition] = layer_activations[activation_larger_or_not_set_condition]
 
-            lower_neuron_bounds_dict[
-                (layer_activations < lower_neuron_bounds_dict) | np.isnan(lower_neuron_bounds_dict)] = \
-                layer_activations[
-                    (layer_activations < lower_neuron_bounds_dict) | np.isnan(lower_neuron_bounds_dict)]
+            activation_lower_or_not_set_condition = (layer_activations < lower_neuron_bounds_dict) | np.isnan(
+                lower_neuron_bounds_dict)
+            lower_neuron_bounds_dict[activation_lower_or_not_set_condition] = layer_activations[activation_lower_or_not_set_condition]
 
     def update_coverage(self, input_data):
         for layer_name, layer_activations in self.iterate_over_layer_activations(input_data):

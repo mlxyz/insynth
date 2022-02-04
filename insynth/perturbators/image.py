@@ -15,8 +15,6 @@ class ImageNoisePerturbator(BlackboxImagePerturbator):
         self.noise_prob_args = noise_prob_args
 
     def _internal_apply(self, original_input: Image):
-        if random.random() > self.p:
-            return original_input
         with original_input as img:
             image = np.array(img)
             salt_pepper_ratio = 0.5
@@ -78,10 +76,9 @@ class ImageFlipPerturbator(BlackboxImagePerturbator):
 
     def _internal_apply(self, original_input: Image):
         with original_input.copy() as image:
-            if (self.transformation_type == 'flip' or self.transformation_type == 'both') and random.random() < self.p:
+            if self.transformation_type == 'flip' or self.transformation_type == 'both':
                 image = ImageOps.flip(image)
-            if (self.transformation_type == 'mirror' or self.transformation_type == 'both') \
-                    and random.random() < self.p:
+            if self.transformation_type == 'mirror' or self.transformation_type == 'both':
                 image = ImageOps.mirror(image)
             return image
 
