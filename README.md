@@ -42,7 +42,7 @@
   <p align="center">
     Robustness testing of Keras models using domain-specific input generation in Python
     <br />
-    <a href="https://github.com/mlxyz/insynth"><strong>Explore the docs »</strong></a>
+    <a href="https://insynth.readthedocs.io/en/latest/"><strong>Explore the docs »</strong></a>
     <br />
     <br />
     <a href="https://github.com/mlxyz/insynth">View Demo</a>
@@ -235,7 +235,7 @@ In order to conduct a full end-to-end robustness test, the runner class is provi
       ````
 If you want to apply all available perturbators and coverage calculators for a given domain, utilize the respective `ComprehensiveRunner` classes.
 
-For more examples, please refer to the [Documentation](https://example.com)
+For more examples, please refer to the [Documentation](https://insynth.readthedocs.io/en/latest/)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -278,21 +278,9 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ## Contact
 
-Marian Lambert - marlambe@mail.uni-mannheim.de
+Marian Lambert
 
 Project Link: [https://github.com/mlxyz/insynth](https://github.com/mlxyz/insynth)
-
-<p align="right">(<a href="#top">back to top</a>)</p>
-
-
-
-<!-- ACKNOWLEDGMENTS -->
-
-## Acknowledgments
-
-  * []()
-  * []()
-  * []()
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
