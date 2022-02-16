@@ -10,8 +10,6 @@ Welcome to InSynth's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   myfile.md
-
 
 Indices and tables
 ==================
@@ -19,3 +17,7 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+.. toctree::
+
+   architecture.md
