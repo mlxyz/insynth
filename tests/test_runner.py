@@ -115,8 +115,8 @@ class TestRunner(unittest.TestCase):
                                not isinstance(perturbator, ImageCompressionPerturbator)]
         report, robustness = runner.run(save_incorrect_mutated_samples=False)
         print(report.to_string())
-        assert len(report.columns) == 13
-        assert report.isna().sum().sum() == 0
+        assert len(report.columns) == 14
+        assert report.isna().sum().sum() == 2  # 2 rows have no parameters (seed and combined)
         assert isinstance(robustness, float)
 
     def test_ComprehensiveAudioRunner(self):
@@ -137,11 +137,11 @@ class TestRunner(unittest.TestCase):
             data_generator, y_test,
             model, data_generator)
         runner.perturbators = [AudioCompressionPerturbator(p=1.0)]
-        runner.coverage_calculators=[]
+        runner.coverage_calculators = []
         report, robustness = runner.run(save_incorrect_mutated_samples=False)
         print(report)
-        assert len(report.columns) == 7
-        assert report.isna().sum().sum() == 0
+        assert len(report.columns) == 8
+        assert report.isna().sum().sum() == 2
         assert isinstance(robustness, float)
 
     def test_ComprehensiveTextRunner(self):
@@ -161,6 +161,10 @@ class TestRunner(unittest.TestCase):
         runner = ComprehensiveTextRunner(data_generator, y_test, model, data_generator)
         report, robustness = runner.run(save_incorrect_mutated_samples=False)
         print(report.to_string())
-        assert len(report.columns) == 13
-        assert report.isna().sum().sum() == 0
+        assert len(report.columns) == 14
+        assert report.isna().sum().sum() == 2
         assert isinstance(robustness, float)
+
+
+if __name__ == '__main__':
+    unittest.main()

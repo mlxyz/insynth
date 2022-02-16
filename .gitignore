@@ -280,3 +280,8 @@ $RECYCLE.BIN/
 # AudioInput
 *.wav
 *.txt
+
+*.pgf
+*.tex
+*.JPEG
+*.dat
