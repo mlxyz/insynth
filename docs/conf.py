@@ -17,12 +17,12 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'insynth'
-copyright = '2021, Marian Lambert'
+project = 'InSynth'
+copyright = '2022, Marian Lambert'
 author = 'Marian Lambert'
 
 # The full version, including alpha/beta/rc tags
-release = '0.0.1'
+release = '1.0.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -30,7 +30,7 @@ release = '0.0.1'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = [
+extensions = ["myst_parser"
 ]
 
 # Add any paths that contain templates here, relative to this directory.
