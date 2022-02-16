@@ -1,15 +1,16 @@
-.. insynth documentation master file, created by
-   sphinx-quickstart on Thu Dec  9 16:45:02 2021.
+.. InSynth documentation master file, created by
+   sphinx-quickstart on Wed Feb 16 17:27:49 2022.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to insynth's documentation!
+Welcome to InSynth's documentation!
 ===================================
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
+   myfile.md
 
 
 Indices and tables
