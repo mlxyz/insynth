@@ -14,21 +14,38 @@ from copy import deepcopy
 
 import numpy as np
 
-from insynth.metrics.coverage.coverage_calculator import AbstractCoverageCalculator, num_neurons
+from insynth.calculators.abstract_calculator import AbstractCoverageCalculator, num_neurons
 
 
 def neurons_covered(coverage_dict):
+    """
+    Returns the number of neurons covered from the given coverage dictionary.
+    :param coverage_dict:
+    :return:
+    """
     covered_neurons = sum(arr.sum() for arr in coverage_dict.values())
     total_neurons = sum(len(arr) for arr in coverage_dict.values())
     return covered_neurons, total_neurons, covered_neurons / float(total_neurons)
 
 
 def merge_np_arrays(arr1, arr2):
+    """
+    Merges two numpy arrays containing boolean values using the logical OR operator.
+    :param arr1:
+    :param arr2:
+    :return:
+    """
     arr1[arr2] = True
     return arr1
 
 
 def merge_dicts(dict_1, dict_2):
+    """
+    Merges two dictionaries of numpy arrays containing boolean values.
+    :param dict_1:
+    :param dict_2:
+    :return:
+    """
     for key in dict_1.keys():
         dict_1[key] = merge_np_arrays(dict_1[key], dict_2[key])
     return dict_1
@@ -230,77 +247,3 @@ class NeuronBoundaryCoverageCalculator(StrongNeuronActivationCoverageCalculator)
         self.coverage_dict = merge_dicts(self.coverage_dict, other_calculator.coverage_dict)
 
 
-class TopKNeuronCoverageCalculator(AbstractCoverageCalculator):
-    def __copy__(self):
-        self_copy = TopKNeuronCoverageCalculator(self.model, self.k)
-        self_copy.coverage_dict = deepcopy(self.coverage_dict)
-        return self_copy
-
-    def __init__(self, model, k=3):
-        super().__init__(model)
-        self.coverage_dict = self._init_dict(model)
-        self.k = k
-
-    def _init_dict(self, model) -> dict:
-        coverage_dict = {}
-        for layer in self.layers_with_neurons:
-            coverage_dict[layer.name] = set()
-        return coverage_dict
-
-    def merge(self, other_calculator):
-        for key in self.coverage_dict.keys():
-            self.coverage_dict[key] |= other_calculator.coverage_dict[key]
-
-    def update_coverage(self, input_data):
-
-        for layer_name, layer_activations in self.iterate_over_layer_activations(
-                input_data):
-            coverage_dict = self.coverage_dict[layer_name]
-            layer_activations = layer_activations.flatten()
-            k = min(len(layer_activations), self.k)
-            top_k_indices = np.argpartition(layer_activations, -k)[-k:]
-            coverage_dict |= set(top_k_indices)
-
-    def get_coverage(self) -> dict:
-        top_k_neurons = sum(len(layer) for layer in self.coverage_dict.values())
-        total_neurons = sum(num_neurons(layer) for layer in self.layers_with_neurons)
-        return {
-            'total_neurons': total_neurons,
-            'top_k_neurons': top_k_neurons,
-            'top_k_neuron_coverage_percentage': top_k_neurons / total_neurons
-        }
-
-
-class TopKNeuronPatternsCalculator(AbstractCoverageCalculator):
-    def merge(self, other_calculator):
-        self.coverage_dict |= other_calculator.coverage_dict
-
-    def __copy__(self):
-        self_copy = TopKNeuronPatternsCalculator(self.model, self.k)
-        self_copy.coverage_dict = deepcopy(self.coverage_dict)
-        return self_copy
-
-    def __init__(self, model, k=3):
-        super().__init__(model)
-        self.k = k
-        self.coverage_dict = self._init_dict()
-
-    def _init_dict(self) -> set:
-        coverage_dict = set()
-        return coverage_dict
-
-    def update_coverage(self, input_data):
-        pattern = []
-
-        for layer_name, layer_activations in self.iterate_over_layer_activations(
-                input_data):
-            layer_activations = layer_activations.flatten()
-            top_k_indices = (-layer_activations).argsort()[:self.k]
-            pattern.extend(map(lambda index: layer_name + '_' + str(index), top_k_indices))
-
-        self.coverage_dict |= {tuple(pattern)}
-
-    def get_coverage(self) -> dict:
-        return {
-            'total_patterns': len(self.coverage_dict),
-        }

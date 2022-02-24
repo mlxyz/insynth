@@ -184,7 +184,7 @@ To calculate the coverage criteria for a model, follow the steps below.
 
 1. Import the coverage criteria (e.g. the `CoverageCriteria`) from the respective module.
       ````python
-    from insynth.metrics.coverage.neuron import StrongNeuronActivationCoverageCalculator
+    from insynth.metrics.neuron import StrongNeuronActivationCoverageCalculator
       ````
 2. Create an instance of the coverage criteria and pass the model to be tested to the constructor.
       ````python

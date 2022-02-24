@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from tensorflow import keras
 
-from insynth.metrics.coverage.neuron import NeuronCoverageCalculator, StrongNeuronActivationCoverageCalculator, \
+from insynth.calculators import NeuronCoverageCalculator, StrongNeuronActivationCoverageCalculator, \
     KMultiSectionNeuronCoverageCalculator, NeuronBoundaryCoverageCalculator, TopKNeuronCoverageCalculator, \
     TopKNeuronPatternsCalculator
 

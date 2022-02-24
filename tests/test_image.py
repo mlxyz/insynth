@@ -1,13 +1,10 @@
 import unittest
-from unittest import skip
 
 import numpy as np
 from PIL import Image
 from keras import layers
 from tensorflow import keras
 
-from insynth.data import utils
-from insynth.metrics.coverage.neuron import NeuronCoverageCalculator
 from insynth.perturbators.image import ImageNoisePerturbator, ImageBrightnessPerturbator, ImageSharpnessPerturbator, \
     ImageContrastPerturbator, ImageFlipPerturbator, ImageOcclusionPerturbator, ImageCompressionPerturbator, \
     ImagePixelizePerturbator

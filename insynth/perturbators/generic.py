@@ -15,7 +15,7 @@ import warnings
 import numpy as np
 import scipy.stats as st
 
-from insynth.perturbation import AbstractBlackboxPerturbator
+from insynth.perturbators.abstract_perturbator import AbstractBlackboxPerturbator
 
 
 class GenericPerturbator(AbstractBlackboxPerturbator):
@@ -40,10 +40,20 @@ class GenericPerturbator(AbstractBlackboxPerturbator):
         self.distributions = []
 
     def fit(self, dataset):
+        """
+        Fit the perturbator to the given dataset.
+        :param dataset:
+        :return:
+        """
         self.distributions = [self.best_fit_distribution(column) for column in dataset.transpose()]
 
     def best_fit_distribution(self, data, bins=200):
-        """Model data by finding best fit distribution to data"""
+        """
+        Returns the best fit distribution to the data.
+        :param data:
+        :param bins:
+        :return:
+        """
 
         y, x = np.histogram(data, bins=bins, density=True)
         x = (x + np.roll(x, -1))[:-1] / 2.0

@@ -13,7 +13,7 @@
 import random
 from abc import ABC, abstractmethod
 
-from insynth.metrics.coverage.neuron import NeuronCoverageCalculator, StrongNeuronActivationCoverageCalculator, \
+from insynth.calculators import NeuronCoverageCalculator, StrongNeuronActivationCoverageCalculator, \
     NeuronBoundaryCoverageCalculator, KMultiSectionNeuronCoverageCalculator, TopKNeuronCoverageCalculator, \
     TopKNeuronPatternsCalculator
 
@@ -23,12 +23,22 @@ class AbstractBlackboxPerturbator(ABC):
         self.p = p
 
     def apply(self, original_input):
+        """
+        Applies the perturbator to the given input with a probability given by p.
+        :param original_input:
+        :return:
+        """
         if random.random() > self.p:
             return original_input
         return self._internal_apply(original_input)
 
     @abstractmethod
     def _internal_apply(self, original_input):
+        """
+        Applies the perturbator to the given input.
+        :param original_input:
+        :return:
+        """
         raise NotImplementedError
 
 
@@ -38,6 +48,11 @@ class BlackboxImagePerturbator(AbstractBlackboxPerturbator):
 
     @abstractmethod
     def _internal_apply(self, original_input):
+        """
+        Applies the perturbator to the given input. The input is expected to be a PIL image.
+        :param original_input:
+        :return:
+        """
         raise NotImplementedError
 
 
@@ -52,6 +67,11 @@ class BlackboxAudioPerturbator(AbstractBlackboxPerturbator):
 
     @abstractmethod
     def _internal_apply(self, original_input):
+        """
+        Applies the perturbator to the given input. The input is expected to be a pair of numpy array and sample rate.
+        :param original_input:
+        :return:
+        """
         raise NotImplementedError
 
 
@@ -61,6 +81,11 @@ class BlackboxTextPerturbator(AbstractBlackboxPerturbator):
 
     @abstractmethod
     def _internal_apply(self, original_input):
+        """
+        Applies the perturbator to the given input. The input is expected to be a string.
+        :param original_input:
+        :return:
+        """
         raise NotImplementedError
 
 
@@ -70,6 +95,11 @@ class AbstractWhiteboxPerturbator(ABC):
 
     @abstractmethod
     def apply(self, original_input):
+        """
+        Applies the perturbator to the given input.
+        :param original_input:
+        :return:
+        """
         raise NotImplementedError
 
 
@@ -79,6 +109,11 @@ class WhiteboxImagePerturbator(AbstractWhiteboxPerturbator):
 
     @abstractmethod
     def apply(self, original_input):
+        """
+        Applies the perturbator to the given input. The input is expected to be a PIL image.
+        :param original_input:
+        :return:
+        """
         raise NotImplementedError
 
 
@@ -88,6 +123,11 @@ class WhiteboxAudioPerturbator(AbstractWhiteboxPerturbator):
 
     @abstractmethod
     def apply(self, original_input):
+        """
+        Applies the perturbator to the given input. The input is expected to be a pair of numpy array and sample rate.
+        :param original_input:
+        :return:
+        """
         raise NotImplementedError
 
 
@@ -97,6 +137,11 @@ class WhiteboxTextPerturbator(AbstractWhiteboxPerturbator):
 
     @abstractmethod
     def apply(self, original_input):
+        """
+        Applies the perturbator to the given input. The input is expected to be a string.
+        :param original_input:
+        :return:
+        """
         raise NotImplementedError
 
 

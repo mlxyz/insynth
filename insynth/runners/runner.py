@@ -23,7 +23,7 @@ from keras import layers
 from sklearn.metrics import classification_report
 from tqdm import tqdm
 
-from insynth.metrics.coverage.neuron import StrongNeuronActivationCoverageCalculator, \
+from insynth.calculators import StrongNeuronActivationCoverageCalculator, \
     KMultiSectionNeuronCoverageCalculator, NeuronCoverageCalculator, NeuronBoundaryCoverageCalculator, \
     TopKNeuronCoverageCalculator, TopKNeuronPatternsCalculator
 from insynth.perturbators.audio import AudioBackgroundWhiteNoisePerturbator, AudioPitchPerturbator, \
@@ -41,6 +41,10 @@ from insynth.perturbators.text import TextTypoPerturbator, TextCasePerturbator, 
 class AbstractRunner(ABC):
     @abstractmethod
     def run(self):
+        """
+        Returns a report by running the robustness test.
+        :return:
+        """
         raise NotImplementedError
 
 

@@ -11,7 +11,6 @@
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import math
-import random
 
 import numpy as np
 from audiomentations import Mp3Compression, PitchShift, ClippingDistortion, Gain, AddShortNoises
@@ -20,7 +19,7 @@ from audiomentations.core.utils import get_file_paths
 from scipy.stats import norm
 
 from insynth.data import utils
-from insynth.perturbation import BlackboxAudioPerturbator, WhiteboxAudioPerturbator
+from insynth.perturbators.abstract_perturbator import BlackboxAudioPerturbator
 
 
 class AudioBackgroundWhiteNoisePerturbator(BlackboxAudioPerturbator):
@@ -30,6 +29,11 @@ class AudioBackgroundWhiteNoisePerturbator(BlackboxAudioPerturbator):
         self.noise_prob_args = noise_prob_args
 
     def _internal_apply(self, original_input):
+        """
+        Adds white noise to the audio signal.
+        :param original_input:
+        :return:
+        """
         signal, sample_rate = original_input
 
         noise_level = self.noise_prob.rvs(**self.noise_prob_args)
@@ -49,6 +53,11 @@ class AudioCompressionPerturbator(BlackboxAudioPerturbator):
         self.compression_prob_args = compression_prob_args
 
     def _internal_apply(self, original_input):
+        """
+        Adds compression artifacts to the audio signal.
+        :param original_input:
+        :return:
+        """
         signal, sample_rate = original_input
 
         compression_rate = self.compression_prob.rvs(
@@ -68,6 +77,11 @@ class AudioPitchPerturbator(BlackboxAudioPerturbator):
         self.pitch_prob_args = pitch_prob_args
 
     def _internal_apply(self, original_input):
+        """
+        Changes the pitch of the audio signal.
+        :param original_input:
+        :return:
+        """
         signal, sample_rate = original_input
 
         pitch_shift = self.pitch_prob.rvs(**self.pitch_prob_args)
@@ -85,6 +99,11 @@ class AudioClippingPerturbator(BlackboxAudioPerturbator):
         self.clipping_prob_args = clipping_prob_args
 
     def _internal_apply(self, original_input):
+        """
+        Clips the audio signal.
+        :param original_input:
+        :return:
+        """
         signal, sample_rate = original_input
 
         clipping_percentile = self.clipping_prob.rvs(**self.clipping_prob_args)
@@ -102,6 +121,11 @@ class AudioVolumePerturbator(BlackboxAudioPerturbator):
         self.volume_prob_args = volume_prob_args
 
     def _internal_apply(self, original_input):
+        """
+        Changes the volume of the audio signal.
+        :param original_input:
+        :return:
+        """
         signal, sample_rate = original_input
 
         volume_shift = self.volume_prob.rvs(**self.volume_prob_args)
@@ -119,6 +143,11 @@ class AudioEchoPerturbator(BlackboxAudioPerturbator):
         self.echo_prob_args = echo_prob_args
 
     def _internal_apply(self, original_input):
+        """
+        Adds echo to the audio signal.
+        :param original_input:
+        :return:
+        """
         signal, sample_rate = original_input
 
         echo_delay = self.echo_prob.rvs(**self.echo_prob_args)
@@ -148,6 +177,11 @@ class AudioShortNoisePerturbator(BlackboxAudioPerturbator):
         self.sound_file_paths = [str(p) for p in self.sound_file_paths]
 
     def _internal_apply(self, original_input):
+        """
+        Adds short background noises to the audio signal.
+        :param original_input:
+        :return:
+        """
         signal, sample_rate = original_input
 
         op = AddShortNoises(
@@ -171,6 +205,11 @@ class AudioBackgroundNoisePerturbator(BlackboxAudioPerturbator):
         self.sound_file_paths = [str(p) for p in self.sound_file_paths]
 
     def _internal_apply(self, original_input):
+        """
+        Adds background noises to the audio signal.
+        :param original_input:
+        :return:
+        """
         signal, sample_rate = original_input
 
         op = AddBackgroundNoise(
@@ -195,6 +234,11 @@ class AudioImpulseResponsePerturbator(BlackboxAudioPerturbator):
         self.ir_files = [str(p) for p in self.ir_files]
 
     def _internal_apply(self, original_input):
+        """
+        Convolutes the audio signal with an impulse response.
+        :param original_input:
+        :return:
+        """
         signal, sample_rate = original_input
 
         op = ApplyImpulseResponse(

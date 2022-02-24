@@ -17,7 +17,7 @@ import numpy as np
 from PIL import Image, ImageEnhance, ImageDraw, ImageOps
 from scipy.stats import norm
 
-from insynth.perturbation import BlackboxImagePerturbator
+from insynth.perturbators.abstract_perturbator import BlackboxImagePerturbator
 
 
 class ImageNoisePerturbator(BlackboxImagePerturbator):
@@ -27,6 +27,11 @@ class ImageNoisePerturbator(BlackboxImagePerturbator):
         self.noise_prob_args = noise_prob_args
 
     def _internal_apply(self, original_input: Image):
+        """
+        Adds noise to the image.
+        :param original_input:
+        :return:
+        """
         with original_input as img:
             image = np.array(img)
             salt_pepper_ratio = 0.5
@@ -53,6 +58,11 @@ class ImageBrightnessPerturbator(BlackboxImagePerturbator):
         self.brightness_change_prob_args = brightness_change_prob_args
 
     def _internal_apply(self, original_input: Image):
+        """
+        Changes the brightness of the image.
+        :param original_input:
+        :return:
+        """
         with original_input as image:
             return ImageEnhance.Brightness(image).enhance(
                 self.brightness_change_prob.rvs(**self.brightness_change_prob_args))
@@ -65,6 +75,11 @@ class ImageContrastPerturbator(BlackboxImagePerturbator):
         self.contrast_change_prob_args = contrast_change_prob_args
 
     def _internal_apply(self, original_input: Image):
+        """
+        Changes the contrast of the image.
+        :param original_input:
+        :return:
+        """
         with original_input as image:
             return ImageEnhance.Contrast(image).enhance(self.contrast_change_prob.rvs(**self.contrast_change_prob_args))
 
@@ -76,6 +91,11 @@ class ImageSharpnessPerturbator(BlackboxImagePerturbator):
         self.sharpness_change_prob_args = sharpness_change_prob_args
 
     def _internal_apply(self, original_input: Image):
+        """
+        Changes the sharpness of the image.
+        :param original_input:
+        :return:
+        """
         with original_input as image:
             return ImageEnhance.Sharpness(image).enhance(
                 self.sharpness_change_prob.rvs(**self.sharpness_change_prob_args))
@@ -87,6 +107,11 @@ class ImageFlipPerturbator(BlackboxImagePerturbator):
         self.transformation_type = transformation_type
 
     def _internal_apply(self, original_input: Image):
+        """
+        Flips or mirrors the image.
+        :param original_input:
+        :return:
+        """
         with original_input.copy() as image:
             if self.transformation_type == 'flip' or self.transformation_type == 'both':
                 image = ImageOps.flip(image)
@@ -109,6 +134,11 @@ class ImageOcclusionPerturbator(BlackboxImagePerturbator):
         self.color = color
 
     def _internal_apply(self, original_input: Image):
+        """
+        Adds occlusion artifacts to the image.
+        :param original_input:
+        :return:
+        """
         with original_input.copy() as image:
             image_width, image_height = image.size
             strength = self.strength_prob.rvs(**self.strength_prob_args)
@@ -133,6 +163,11 @@ class ImageCompressionPerturbator(BlackboxImagePerturbator):
         self.artifact_prob_args = artifact_prob_args
 
     def _internal_apply(self, original_input: Image):
+        """
+        Adds compression artifacts to the image.
+        :param original_input:
+        :return:
+        """
         buffer = io.BytesIO()
         with original_input as image:
             image.convert('RGB').save(buffer, 'JPEG',
@@ -149,6 +184,11 @@ class ImagePixelizePerturbator(BlackboxImagePerturbator):
         self.pixelize_prob_args = pixelize_prob_args
 
     def _internal_apply(self, original_input: Image):
+        """
+        Pixelates the image.
+        :param original_input:
+        :return:
+        """
         with original_input as image:
             image_width, image_height = image.size
             pixelize_factor = self.pixelize_prob.rvs(**self.pixelize_prob_args)

@@ -16,7 +16,7 @@ import re
 from scipy.stats import norm
 
 from insynth.data import utils
-from insynth.perturbation import BlackboxTextPerturbator
+from insynth.perturbators.abstract_perturbator import BlackboxTextPerturbator
 
 STOP_WORDS = ['i', 'me', 'and', 'an']
 
@@ -41,6 +41,11 @@ class TextTypoPerturbator(BlackboxTextPerturbator):
                     self.misspell_map[correct_word].append(line.lower())
 
     def _internal_apply(self, original_input: str):
+        """
+        Introduces common typos into the input string.
+        :param original_input:
+        :return:
+        """
         typo_rate = self.typo_prob.rvs(**self.typo_prob_args)
         new_text = original_input
         for correct_word, misspellings in self.misspell_map.items():
@@ -58,6 +63,11 @@ class TextCasePerturbator(BlackboxTextPerturbator):
         self.case_switch_prob_args = case_switch_prob_args
 
     def _internal_apply(self, original_input: str):
+        """
+        Switches the case of individual words in the input string.
+        :param original_input:
+        :return:
+        """
         case_switch_prob = self.case_switch_prob.rvs(**self.case_switch_prob_args)
         return ''.join((x.lower() if x.isupper() else x.upper()) if random.random() < case_switch_prob else x for x in
                        original_input)
@@ -70,6 +80,11 @@ class TextWordRemovalPerturbator(BlackboxTextPerturbator):
         self.word_removal_prob_args = word_removal_prob_args
 
     def _internal_apply(self, original_input: str):
+        """
+        Removes individual words from the input string.
+        :param original_input:
+        :return:
+        """
         word_removal_prob = self.word_removal_prob.rvs(**self.word_removal_prob_args)
         return re.sub('(?<!\w)\w+(?=\W|$)',
                       lambda match: '' if random.random() < word_removal_prob else match.group(0),
@@ -83,6 +98,11 @@ class TextStopWordRemovalPerturbator(BlackboxTextPerturbator):
         self.stop_word_removal_prob_args = stop_word_removal_prob_args
 
     def _internal_apply(self, original_input: str):
+        """
+        Removes stop words from the input string.
+        :param original_input:
+        :return:
+        """
         stop_word_removal_prob = self.stop_word_removal_prob.rvs(**self.stop_word_removal_prob_args)
         new_text = original_input
         for stop_word in STOP_WORDS:
@@ -100,6 +120,11 @@ class TextWordSwitchPerturbator(BlackboxTextPerturbator):
         self._was_switched = False
 
     def _internal_apply(self, original_input):
+        """
+        Switches individual words in the input string.
+        :param original_input:
+        :return:
+        """
         self._was_switched = False
         switch_word_prob = self.word_switch_prob.rvs(**self.word_switch_prob_args)
         tokens = re.findall('(?<!\w)\w+(?=\W|$)', original_input, flags=re.IGNORECASE)
@@ -133,6 +158,11 @@ class TextCharacterSwitchPerturbator(BlackboxTextPerturbator):
         self.char_switch_prob_args = char_switch_prob_args
 
     def _internal_apply(self, original_input):
+        """
+        Switches individual characters in the input string.
+        :param original_input:
+        :return:
+        """
         self._was_switched = False
         char_switch_prob = self.char_switch_prob.rvs(**self.char_switch_prob_args)
         return re.sub('(?<!\w)\w+(?=\W|$)',
@@ -173,6 +203,11 @@ class TextPunctuationErrorPerturbator(BlackboxTextPerturbator):
         self.punct_error_prob_args = punct_error_prob_args
 
     def _internal_apply(self, original_input):
+        """
+        Introduces punctuation errors into the input string.
+        :param original_input:
+        :return:
+        """
         punct_error_prob = self.punct_error_prob.rvs(**self.punct_error_prob_args)
         original_input = self.apply_apostrophe_error(original_input, punct_error_prob)
         original_input = self.apply_period_error(original_input, punct_error_prob)

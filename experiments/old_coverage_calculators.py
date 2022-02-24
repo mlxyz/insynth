@@ -3,7 +3,7 @@ from copy import deepcopy
 
 import numpy as np
 
-from insynth.metrics.coverage.coverage_calculator import AbstractCoverageCalculator
+from insynth.metrics.coverage_calculator import AbstractCoverageCalculator
 
 
 def num_neurons(shape):

@@ -13,7 +13,7 @@ from experiments.old_coverage_calculators import NeuronCoverageCalculator as Old
     NeuronBoundaryCoverageCalculator as OldNeuronBoundaryCoverageCalculator, \
     TopKNeuronCoverageCalculator as OldTopKNeuronCoverageCalculator, \
     TopKNeuronPatternsCalculator as OldTopKNeuronPatternsCalculator
-from insynth.metrics.coverage.neuron import NeuronCoverageCalculator, StrongNeuronActivationCoverageCalculator, \
+from insynth.metrics.neuron import NeuronCoverageCalculator, StrongNeuronActivationCoverageCalculator, \
     KMultiSectionNeuronCoverageCalculator, NeuronBoundaryCoverageCalculator, TopKNeuronCoverageCalculator, \
     TopKNeuronPatternsCalculator
 

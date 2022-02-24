@@ -1,7 +1,6 @@
 import os
 import unittest
 from pathlib import Path
-from unittest import skip
 
 import librosa
 import numpy as np
@@ -13,11 +12,9 @@ from tensorflow import keras
 from tensorflow.keras import layers
 
 from insynth.data import utils
-from insynth.metrics.coverage.neuron import NeuronCoverageCalculator
 from insynth.perturbators.audio import AudioCompressionPerturbator
-from insynth.perturbators.image import ImageBrightnessPerturbator, ImageContrastPerturbator, ImageOcclusionPerturbator, \
-    ImageCompressionPerturbator
-from insynth.runners.runner import ComprehensiveImageRunner, BasicImageRunner, ComprehensiveAudioRunner, \
+from insynth.perturbators.image import ImageCompressionPerturbator
+from insynth.runners.runner import ComprehensiveImageRunner, ComprehensiveAudioRunner, \
     ComprehensiveTextRunner
 
 
