@@ -1,5 +1,8 @@
 @startuml
 !theme vibrant
+skinparam classFontSize 15
+skinparam classFontName Times New Roman
+
 package insynth {
 
 package insynth.runners {
