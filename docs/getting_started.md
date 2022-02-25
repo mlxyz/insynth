@@ -20,12 +20,7 @@ Run the following command to install the python package from the PyPI repository
    ```sh
    pip install insynth
    ```
-
-<p align="right">(<a href="#top">back to top</a>)</p>
-
-
-
-<!-- USAGE EXAMPLES -->
+This will install the latest version of _InSynth_ to your local Python environment.
 
 ## Usage
 
