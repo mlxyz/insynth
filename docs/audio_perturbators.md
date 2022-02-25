@@ -8,7 +8,7 @@ and the sample rate as input and return a numpy array (perturbed audio signal).
 
 The AudioBackgroundWhiteNoisePerturbator adds white noise to the input signal.
 
-### Usage:
+### Usage
 
 ```python
 from insynth.perturbators.audio import AudioBackgroundWhiteNoisePerturbator
@@ -28,7 +28,7 @@ perturbed_im = perturbator.apply((audio, sample_rate))
 
 The AudioCompressionPerturbator adds compression artifacts to the input signal.
 
-### Usage:
+### Usage
 
 ```python
 from insynth.perturbators.audio import AudioCompressionPerturbator
@@ -48,7 +48,7 @@ perturbed_im = perturbator.apply((audio, sample_rate))
 
 The AudioPitchPerturbator changes the pitch of the input signal.
 
-### Usage:
+### Usage
 
 ```python
 from insynth.perturbators.audio import AudioPitchPerturbator
@@ -68,7 +68,7 @@ perturbed_im = perturbator.apply((audio, sample_rate))
 
 The AudioClippingPerturbator clips the input signal.
 
-### Usage:
+### Usage
 
 ```python
 from insynth.perturbators.audio import AudioClippingPerturbator
@@ -88,7 +88,7 @@ perturbed_im = perturbator.apply((audio, sample_rate))
 
 The AudioVolumePerturbator changes the volume of the input signal.
 
-### Usage:
+### Usage
 
 ```python
 from insynth.perturbators.audio import AudioVolumePerturbator
@@ -108,7 +108,7 @@ perturbed_im = perturbator.apply((audio, sample_rate))
 
 The AudioEchoPerturbator adds echo to the input signal.
 
-### Usage:
+### Usage
 
 ```python
 from insynth.perturbators.audio import AudioEchoPerturbator
@@ -128,7 +128,7 @@ perturbed_im = perturbator.apply((audio, sample_rate))
 
 The AudioShortNoisePerturbator adds short background noise to the input signal.
 
-### Usage:
+### Usage
 
 ```python
 from insynth.perturbators.audio import AudioShortNoisePerturbator
@@ -147,7 +147,7 @@ perturbed_im = perturbator.apply((audio, sample_rate))
 
 The AudioBackgroundNoisePerturbator adds background noise to the input signal.
 
-### Usage:
+### Usage
 
 ```python
 from insynth.perturbators.audio import AudioBackgroundNoisePerturbator
@@ -166,7 +166,7 @@ perturbed_im = perturbator.apply((audio, sample_rate))
 
 The AudioImpulseResponsePerturbator convolves the input signal with an impulse response.
 
-### Usage:
+### Usage
 
 ```python
 from insynth.perturbators.audio import AudioImpulseResponsePerturbator

@@ -8,7 +8,7 @@ They take a string as input and return a mutated string.
 
 The TextTypoPerturbator introduces typographic errors into the text.
 
-### Usage:
+### Usage
 
 ```python
 from insynth.perturbators.text import TextTypoPerturbator
@@ -26,7 +26,7 @@ perturbed_text = perturbator.apply(text)
 
 The TextCasePerturbator switches the case of randomly selected words in the text.
 
-### Usage:
+### Usage
 
 ```python
 from insynth.perturbators.text import TextCasePerturbator
@@ -44,7 +44,7 @@ perturbed_text = perturbator.apply(text)
 
 The TextWordRemovalPerturbator removes randomly selected words from the text.
 
-### Usage:
+### Usage
 
 ```python
 from insynth.perturbators.text import TextWordRemovalPerturbator
@@ -62,7 +62,7 @@ perturbed_text = perturbator.apply(text)
 
 The TextStopWordRemovalPerturbator removes randomly selected stop words from the text.
 
-### Usage:
+### Usage
 
 ```python
 from insynth.perturbators.text import TextStopWordRemovalPerturbator
@@ -80,7 +80,7 @@ perturbed_text = perturbator.apply(text)
 
 The TextWordSwitchPerturbator switches randomly selected words in the text.
 
-### Usage:
+### Usage
 
 ```python
 from insynth.perturbators.text import TextWordSwitchPerturbator
@@ -98,7 +98,7 @@ perturbed_text = perturbator.apply(text)
 
 The TextCharacterSwitchPerturbator switches randomly selected characters in the text.
 
-### Usage:
+### Usage
 
 ```python
 from insynth.perturbators.text import TextCharacterSwitchPerturbator
@@ -116,7 +116,7 @@ perturbed_text = perturbator.apply(text)
 
 The TextPunctuationErrorPerturbator introduces punctuation errors into the text.
 
-### Usage:
+### Usage
 
 ```python
 from insynth.perturbators.text import TextPunctuationErrorPerturbator

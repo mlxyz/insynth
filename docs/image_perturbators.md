@@ -8,7 +8,7 @@ return a transformed version of it.
 
 The ImageNoisePerturbator adds noise to an image. The probability distribution determines how much noise is added.
 
-### Usage:
+### Usage
 
 ```python
 from insynth.perturbators.image import ImageNoisePerturbator
@@ -29,7 +29,7 @@ perturbed_im = perturbator.apply(im)
 The ImageBrightnessPerturbator changes the brightness of an image. The probability distribution determines how much the
 brightness is changed.
 
-### Usage:
+### Usage
 
 ```python
 from insynth.perturbators.image import ImageBrightnessPerturbator
@@ -51,7 +51,7 @@ perturbed_im = perturbator.apply(im)
 The ImageContrastPerturbator changes the contrast of an image. The probability distribution determines how much the
 contrast is changed.
 
-### Usage:
+### Usage
 
 ```python
 from insynth.perturbators.image import ImageContrastPerturbator
@@ -72,7 +72,7 @@ perturbed_im = perturbator.apply(im)
 The ImageSharpnessPerturbator changes the sharpness of an image. The probability distribution determines how much the
 sharpness is changed.
 
-### Usage:
+### Usage
 
 ```python
 from insynth.perturbators.image import ImageSharpnessPerturbator
@@ -93,7 +93,7 @@ perturbed_im = perturbator.apply(im)
 The ImageFlipPerturbator flips an image horizontally or vertically. There is no probability distribution for this
 perturbator.
 
-### Usage:
+### Usage
 
 ```python
 from insynth.perturbators.image import ImageFlipPerturbator
@@ -113,7 +113,7 @@ perturbed_im = perturbator.apply(im)
 The ImageOcclusionPerturbator adds occlusion to an image. The probability distribution determines how much occlusion is
 added. Also, a second and third probability distribution determines the size of each occlusion.
 
-### Usage:
+### Usage
 
 ```python
 from insynth.perturbators.image import ImageOcclusionPerturbator
@@ -137,7 +137,7 @@ perturbed_im = perturbator.apply(im)
 The ImageCompressionPerturbator adds compression artefacts to an image. The probability distribution determines how much
 compression artefacts are added.
 
-### Usage:
+### Usage
 
 ```python
 from insynth.perturbators.image import ImageCompressionPerturbator
@@ -157,7 +157,7 @@ perturbed_im = perturbator.apply(im)
 
 The ImagePixelizePerturbator pixelates an image. The probability distribution determines how much pixelation is added.
 
-### Usage:
+### Usage
 
 ```python
 from insynth.perturbators.image import ImagePixelizePerturbator
