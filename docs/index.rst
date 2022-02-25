@@ -20,4 +20,6 @@ Indices and tables
 
 .. toctree::
 
+   overview.md
+   getting_started.md
    architecture.md
