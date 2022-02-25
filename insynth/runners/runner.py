@@ -202,7 +202,7 @@ class BasicAudioRunner(BasicRunner):
         return tf.math.abs(fft[:, : (sample_rate // 2), :]).numpy()
 
 
-class ComprehensiveImageRunner(BasicImageRunner):
+class ExtensiveImageRunner(BasicImageRunner):
     def __init__(self, dataset_x, dataset_y, model, snac_data, pre_predict_lambda=None):
         super().__init__(None, None, dataset_x, dataset_y,
                          model, pre_predict_lambda)
@@ -238,7 +238,7 @@ class ComprehensiveImageRunner(BasicImageRunner):
         return calcs
 
 
-class ComprehensiveAudioRunner(BasicAudioRunner):
+class ExtensiveAudioRunner(BasicAudioRunner):
     def __init__(self, dataset_x, dataset_y, model, snac_data, pre_predict_lambda=None):
         super().__init__(None, None, dataset_x, dataset_y,
                          model, pre_predict_lambda)
@@ -275,7 +275,7 @@ class ComprehensiveAudioRunner(BasicAudioRunner):
         return calcs
 
 
-class ComprehensiveTextRunner(BasicTextRunner):
+class ExtensiveTextRunner(BasicTextRunner):
     def __init__(self, dataset_x, dataset_y, model, snac_data, pre_predict_lambda=None):
         super().__init__(None, None, dataset_x, dataset_y,
                          model, pre_predict_lambda)

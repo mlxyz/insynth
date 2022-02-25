@@ -5,7 +5,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 
-from insynth.runners.runner import ComprehensiveAudioRunner
+from insynth.runners.runner import ExtensiveAudioRunner
 # download and extract https://insynth-data.s3.eu-central-1.amazonaws.com/speaker_recognition_experiment.zip to data/
 np.seterr(divide='ignore', invalid='ignore')
 logging.basicConfig(level=logging.INFO)
@@ -131,8 +131,8 @@ def pre_predict(sample):
     return audio_to_fft(audio)
 
 
-runner = ComprehensiveAudioRunner(x_test_data_generator, valid_labels, model, x_snac_data_generator,
-                                  pre_predict_lambda=pre_predict)
+runner = ExtensiveAudioRunner(x_test_data_generator, valid_labels, model, x_snac_data_generator,
+                              pre_predict_lambda=pre_predict)
 os.makedirs('../output/speaker_recognition/')
 report, robustness = runner.run(True, 'output/speaker_recognition')
 

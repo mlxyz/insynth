@@ -7,7 +7,7 @@ import tensorflow as tf
 # download and extract https://insynth-data.s3.eu-central-1.amazonaws.com/sentiment_analysis_experiment.zip to data/
 from keras.layers import TextVectorization
 
-from insynth.runners.runner import ComprehensiveTextRunner
+from insynth.runners.runner import ExtensiveTextRunner
 
 DATA_ROOT_PATH = '../data/sentiment_analysis/'
 batch_size = 32
@@ -73,9 +73,9 @@ x_test_data_generator = lambda: x_test_data
 y_test = [sample[1].numpy() for sample in raw_val_ds_y]
 x_snac_data_generator = lambda: (sample[0].numpy().decode('utf-8') for sample in raw_train_ds.take(10))
 model.summary()
-runner = ComprehensiveTextRunner(x_test_data_generator, y_test, model,
-                                 x_snac_data_generator,
-                                 pre_predict_lambda=vectorize_text)
+runner = ExtensiveTextRunner(x_test_data_generator, y_test, model,
+                             x_snac_data_generator,
+                             pre_predict_lambda=vectorize_text)
 os.makedirs('output/sentiment_analysis/')
 report, robustness = runner.run(True, 'output/sentiment_analysis/')
 

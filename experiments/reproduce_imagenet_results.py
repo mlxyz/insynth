@@ -7,7 +7,7 @@ from tensorflow import keras
 
 np.seterr(divide='ignore', invalid='ignore')
 # download data from https://s3.amazonaws.com/fast-ai-imageclas/imagenette2-320.tgz and put val into data/imagenette and train into data/imagenette_snac
-from insynth.runners.runner import ComprehensiveImageRunner
+from insynth.runners.runner import ExtensiveImageRunner
 
 
 def ds_generator(ds, size):
@@ -30,9 +30,9 @@ print(f'SNAC: Found 2000 images of {len(set(y_test_snac))} classes.')
 ### Xception
 xception_model = keras.applications.Xception()
 
-runner = ComprehensiveImageRunner(ds_generator(test_dataset, (299, 299)), y_test, xception_model,
-                                  ds_generator(snac_dataset, (299, 299)),
-                                  lambda sample: keras.applications.xception.preprocess_input(
+runner = ExtensiveImageRunner(ds_generator(test_dataset, (299, 299)), y_test, xception_model,
+                              ds_generator(snac_dataset, (299, 299)),
+                              lambda sample: keras.applications.xception.preprocess_input(
                                       np.expand_dims(np.array(sample), axis=0)))
 
 report, robustness = runner.run(True, 'output/imagenet/xception')
@@ -46,9 +46,9 @@ report.to_csv('output/imagenet/xception/report.csv')
 ### MobileNetV2
 mobilenetv2_model = keras.applications.MobileNetV2()
 
-runner = ComprehensiveImageRunner(ds_generator(test_dataset, (224, 224)), y_test, mobilenetv2_model,
-                                  ds_generator(snac_dataset, (224, 224)),
-                                  lambda sample: keras.applications.mobilenet_v2.preprocess_input(
+runner = ExtensiveImageRunner(ds_generator(test_dataset, (224, 224)), y_test, mobilenetv2_model,
+                              ds_generator(snac_dataset, (224, 224)),
+                              lambda sample: keras.applications.mobilenet_v2.preprocess_input(
                                       np.expand_dims(np.array(sample), axis=0)))
 
 os.makedirs('output/imagenet/mobilenetv2/')
@@ -63,9 +63,9 @@ report.to_csv('output/imagenet/mobilenetv2/report.csv')
 
 inceptionresnet_model = keras.applications.InceptionResNetV2()
 
-runner = ComprehensiveImageRunner(ds_generator(test_dataset, (299, 299)), y_test, inceptionresnet_model,
-                                  ds_generator(snac_dataset, (299, 299)),
-                                  lambda sample: keras.applications.inception_resnet_v2.preprocess_input(
+runner = ExtensiveImageRunner(ds_generator(test_dataset, (299, 299)), y_test, inceptionresnet_model,
+                              ds_generator(snac_dataset, (299, 299)),
+                              lambda sample: keras.applications.inception_resnet_v2.preprocess_input(
                                       np.expand_dims(np.array(sample), axis=0)))
 
 os.makedirs('output/imagenet/inceptionresnet/')

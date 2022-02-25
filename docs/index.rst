@@ -22,4 +22,9 @@ Indices and tables
 
    overview.md
    getting_started.md
-   architecture.md
+   perturbators.md
+   image_perturbators.md
+   audio_perturbators.md
+   text_perturbators.md
+   calculators.md
+   runners.md

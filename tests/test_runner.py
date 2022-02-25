@@ -14,8 +14,8 @@ from tensorflow.keras import layers
 from insynth.data import utils
 from insynth.perturbators.audio import AudioCompressionPerturbator
 from insynth.perturbators.image import ImageCompressionPerturbator
-from insynth.runners.runner import ComprehensiveImageRunner, ComprehensiveAudioRunner, \
-    ComprehensiveTextRunner
+from insynth.runners.runner import ExtensiveImageRunner, ExtensiveAudioRunner, \
+    ExtensiveTextRunner
 
 
 class TestRunner(unittest.TestCase):
@@ -104,7 +104,7 @@ class TestRunner(unittest.TestCase):
         (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
         model = self._generate_mnist_model()
         data_generator = lambda: (Image.fromarray(x) for x in x_test[-10:])
-        runner = ComprehensiveImageRunner(
+        runner = ExtensiveImageRunner(
             data_generator, y_test[-10:],
             model, data_generator)
         # filter out compression perturbator as it generates colored images which cannot be processed by this model
@@ -130,7 +130,7 @@ class TestRunner(unittest.TestCase):
         data_generator = lambda: (librosa.load(file, sr=None) for file in x_test)
         y_test = LabelEncoder().fit_transform(y_test)
         model = self._build_audio_model()
-        runner = ComprehensiveAudioRunner(
+        runner = ExtensiveAudioRunner(
             data_generator, y_test,
             model, data_generator)
         runner.perturbators = [AudioCompressionPerturbator(p=1.0)]
@@ -155,7 +155,7 @@ class TestRunner(unittest.TestCase):
         data_generator = lambda: (Path(file).read_text() for file in x_test)
         y_test = LabelEncoder().fit_transform(y_test)
         model = self._build_sentiment_model()
-        runner = ComprehensiveTextRunner(data_generator, y_test, model, data_generator)
+        runner = ExtensiveTextRunner(data_generator, y_test, model, data_generator)
         report, robustness = runner.run(save_incorrect_mutated_samples=False)
         print(report.to_string())
         assert len(report.columns) == 14
