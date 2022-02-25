@@ -10,9 +10,9 @@
 #
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from runner import BasicImageRunner
-from runner import BasicAudioRunner
-from runner import BasicTextRunner
-from runner import ExtensiveImageRunner
-from runner import ExtensiveAudioRunner
-from runner import ExtensiveTextRunner
+from insynth.runners.runner import BasicImageRunner
+from insynth.runners.runner import BasicAudioRunner
+from insynth.runners.runner import BasicTextRunner
+from insynth.runners.runner import ExtensiveImageRunner
+from insynth.runners.runner import ExtensiveAudioRunner
+from insynth.runners.runner import ExtensiveTextRunner
