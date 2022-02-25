@@ -87,8 +87,6 @@
 
 ## About The Project
 
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
-
 The robustness of machine learning models is crucial to their safe and reliable operation in real-world applications.
 However, conducting robustness tests is hard as it requires evaluating the model under test repeatedly on different
 datasets.
