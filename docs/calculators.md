@@ -10,6 +10,14 @@ Each calculator has to be instantiated for a specific model. Then, the `update_c
 updates the internal coverage dictionaries in the calculator. After that is done for all elements in the dataset,
 the `get_coverage` method can be called to retrieve the coverage.
 
+The calculators expect a python generator as input which allows processing datasets which do not fit into memory.
+A generator is a function which returns a new dataset element on each call.
+It can be created as follows:
+
+```python
+lambda: (data for data in dataset)
+```
+
 ## NeuronCoverageCalculator
 
 The NeuronCoverageCalculator determines the neuron coverage of the model.

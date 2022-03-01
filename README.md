@@ -152,6 +152,8 @@ Run the following command to install the python package from the PyPI repository
 
 _InSynth_ can be used in a variety of ways depending on the goal you are trying to achieve.
 
+For an end-to-end complete robustness testing example, look into the `docs/robustness_test_example.ipynb` notebook. 
+
 ### Data Generation
 To mutate an existing dataset using any of the perturbators provided in the framework, follow the steps below.
 

@@ -8,6 +8,8 @@ and the sample rate as input and return a numpy array (perturbed audio signal).
 
 The AudioBackgroundWhiteNoisePerturbator adds white noise to the input signal.
 
+The probability distribution passed to the class during instantiation is used to determine the amount of noise added to the signal.
+
 ### Usage
 
 ```python
@@ -27,6 +29,8 @@ perturbed_im = perturbator.apply((audio, sample_rate))
 ## AudioCompressionPerturbator
 
 The AudioCompressionPerturbator adds compression artifacts to the input signal.
+
+The probability distribution passed to the class during instantiation is used to determine the amount of compression artifacts added to the signal.
 
 ### Usage
 
@@ -48,6 +52,8 @@ perturbed_im = perturbator.apply((audio, sample_rate))
 
 The AudioPitchPerturbator changes the pitch of the input signal.
 
+The probability distribution passed to the class during instantiation is used to determine how much the pitch is changed.
+
 ### Usage
 
 ```python
@@ -67,6 +73,8 @@ perturbed_im = perturbator.apply((audio, sample_rate))
 ## AudioClippingPerturbator
 
 The AudioClippingPerturbator clips the input signal.
+
+The probability distribution passed to the class during instantiation is used to determine how much the signal is clipped.
 
 ### Usage
 
@@ -88,6 +96,8 @@ perturbed_im = perturbator.apply((audio, sample_rate))
 
 The AudioVolumePerturbator changes the volume of the input signal.
 
+The probability distribution passed to the class during instantiation is used to determine how much the volume is changed.
+
 ### Usage
 
 ```python
@@ -107,6 +117,8 @@ perturbed_im = perturbator.apply((audio, sample_rate))
 ## AudioEchoPerturbator
 
 The AudioEchoPerturbator adds echo to the input signal.
+
+The probability distribution passed to the class during instantiation is used to determine how large the delay of the added echo is.
 
 ### Usage
 
@@ -128,6 +140,9 @@ perturbed_im = perturbator.apply((audio, sample_rate))
 
 The AudioShortNoisePerturbator adds short background noise to the input signal.
 
+The `noise_types` parameter passed to the class during instantiation determines which noise types are added to the signal (chosen randomly).
+They are used as the directory names to search noise files from under `data/audio/background_noise/`.
+
 ### Usage
 
 ```python
@@ -147,6 +162,9 @@ perturbed_im = perturbator.apply((audio, sample_rate))
 
 The AudioBackgroundNoisePerturbator adds background noise to the input signal.
 
+The `noise_types` parameter passed to the class during instantiation determines which noise types are added to the signal (chosen randomly).
+They are used as the directory names to search noise files from under `data/audio/background_noise/`.
+
 ### Usage
 
 ```python
@@ -165,6 +183,9 @@ perturbed_im = perturbator.apply((audio, sample_rate))
 ## AudioImpulseResponsePerturbator
 
 The AudioImpulseResponsePerturbator convolves the input signal with an impulse response.
+
+The `impulse_types` parameter passed to the class during instantiation determines which impulse response types the signal is convolved with.
+They are used as the directory names to search noise files from under `data/audio/pulse_response/`.
 
 ### Usage
 

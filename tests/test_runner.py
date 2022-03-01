@@ -14,7 +14,7 @@ from tensorflow.keras import layers
 from insynth.data import utils
 from insynth.perturbators.audio import AudioCompressionPerturbator
 from insynth.perturbators.image import ImageCompressionPerturbator
-from insynth.runners.runner import ExtensiveImageRunner, ExtensiveAudioRunner, \
+from insynth.runners.extensive import ExtensiveImageRunner, ExtensiveAudioRunner, \
     ExtensiveTextRunner
 
 
