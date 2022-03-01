@@ -9,26 +9,31 @@
 #  - Neither the name of the University Mannheim nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
 #
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import unittest
 
-from insynth.perturbators.abstract_perturbator import AbstractBlackboxPerturbator
+import numpy as np
+from PIL import Image
+
+from insynth.perturbators.image import ImageFlipPerturbator
+from insynth.perturbators.pipeline import PipelinePerturbator
 
 
-class PipelinePerturbator(AbstractBlackboxPerturbator):
+class TestPipeline(unittest.TestCase):
+    def _generate_random_image(self):
+        imarray = np.random.rand(100, 100, 3) * 255
+        im = Image.fromarray(imarray.astype('uint8')).convert('RGBA')
+        return im
 
-    def _internal_apply(self, original_input):
-        pass
+    def test_PipelinePerturbator(self):
+        input_image = self._generate_random_image()
 
-    def __init__(self, perturbators: [AbstractBlackboxPerturbator]):
-        super().__init__()
-        self.perturbators = perturbators
+        flip_perturbator = ImageFlipPerturbator(p=1.0, transformation_type='flip')
+        mirror_perturbator = ImageFlipPerturbator(p=1.0, transformation_type='mirror')
+        pipeline = PipelinePerturbator([flip_perturbator, mirror_perturbator])
 
-    def apply(self, original_input):
-        """
-        Applies the perturbator to the original input by calling the apply method of each perturbator in the pipeline.
-        :param original_input:
-        :return:
-        """
-        output = original_input
-        for perturbator in self.perturbators:
-            output = perturbator.apply(output)
-        return output
+        output_image = pipeline.apply(input_image)
+
+        np.testing.assert_array_equal(output_image, np.flip(input_image, axis=(0, 1)))
+
+if __name__ == '__main__':
+    unittest.main()
