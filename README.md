@@ -17,7 +17,7 @@
 *** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
 *** https://www.markdownguide.org/basic-syntax/#reference-style-links
 -->
-![CI/CD](https://github.com/mlxyz/insynth/actions/workflows/ci.yaml/badge.svg)
+[![CI](https://github.com/mlxyz/insynth/actions/workflows/ci.yaml/badge.svg)](https://github.com/mlxyz/insynth/actions/workflows/ci.yaml)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/069d3759b9e24a468bd4f47c0c3fd02f)](https://www.codacy.com/gh/mlxyz/insynth/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=mlxyz/insynth&amp;utm_campaign=Badge_Grade)
 [![codecov](https://codecov.io/gh/mlxyz/insynth/branch/master/graph/badge.svg?token=UCHS79CXM7)](https://codecov.io/gh/mlxyz/insynth)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fmlxyz%2Finsynth.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fmlxyz%2Finsynth?ref=badge_shield)
